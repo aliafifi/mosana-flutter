@@ -57,16 +57,32 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => print('Create post tapped'),
-        backgroundColor: AppColors.mosanaPurple,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
-            shape: BoxShape.circle,
-          ),
-          child: const Center(
-            child: Icon(Icons.add, color: Colors.white, size: 28),
+      floatingActionButton: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.mosanaPurple.withOpacity(0.4),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => print('Create post tapped'),
+            borderRadius: BorderRadius.circular(28),
+            child: const Center(
+              child: Icon(
+                Icons.auto_awesome,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
           ),
         ),
       ),
@@ -224,22 +240,65 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPostCard(Map<String, dynamic> post) {
+    final isMinted = post['isMinted'] ?? false;
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x14FFFFFF)),
+        border: Border.all(
+          color: isMinted ? AppColors.gold : const Color(0x14FFFFFF),
+          width: isMinted ? 2 : 1,
+        ),
+        boxShadow: isMinted ? [
+          BoxShadow(
+            color: AppColors.gold.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ] : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Minted Badge (if minted)
+          if (isMinted) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: AppColors.goldGradient,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                  SizedBox(width: 6),
+                  Text(
+                    'IMMORTAL POST',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
           Row(
             children: [
               Container(
                 width: 40, height: 40,
-                decoration: BoxDecoration(gradient: AppColors.primaryGradient, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  gradient: isMinted ? AppColors.goldGradient : AppColors.primaryGradient,
+                  shape: BoxShape.circle,
+                ),
                 child: Center(child: Text(post['initials'], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
               ),
               const SizedBox(width: 12),
@@ -277,7 +336,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.mosanaPurple.withOpacity(0.3), AppColors.mosanaBlue.withOpacity(0.3)],
+                  colors: isMinted 
+                    ? [AppColors.gold.withOpacity(0.3), const Color(0xFFD97706).withOpacity(0.3)]
+                    : [AppColors.mosanaPurple.withOpacity(0.3), AppColors.mosanaBlue.withOpacity(0.3)],
                 ),
               ),
               child: const Center(child: Icon(Icons.image_outlined, color: Colors.white, size: 48)),
@@ -291,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildActionButton(Icons.favorite_border, post['likes'].toString(), () => print('Like')),
-                _buildActionButton(Icons.auto_awesome, 'Mint', () => print('Mint'), isMint: true),
+                _buildActionButton(Icons.auto_awesome, isMinted ? 'Minted' : 'Mint', () => print('Mint'), isMint: !isMinted, isMinted: isMinted),
                 _buildActionButton(Icons.toll, 'Tip', () => print('Tip')),
                 _buildActionButton(Icons.chat_bubble_outline, post['comments'].toString(), () => print('Comment')),
                 _buildActionButton(Icons.share_outlined, '', () => print('Share')),
@@ -318,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, {bool isMint = false}) {
+  Widget _buildActionButton(IconData icon, String label, VoidCallback onTap, {bool isMint = false, bool isMinted = false}) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -328,13 +389,17 @@ class _HomeScreenState extends State<HomeScreen> {
           gradient: AppColors.primaryGradient,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: Colors.white.withOpacity(0.2)),
-        ) : null,
+        ) : (isMinted ? BoxDecoration(
+          gradient: AppColors.goldGradient,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.gold.withOpacity(0.3)),
+        ) : null),
         child: Row(
           children: [
-            Icon(icon, size: 16, color: isMint ? Colors.white : AppColors.textSecondary),
+            Icon(icon, size: 16, color: (isMint || isMinted) ? Colors.white : AppColors.textSecondary),
             if (label.isNotEmpty) ...[
               const SizedBox(width: 4),
-              Text(label, style: TextStyle(fontSize: 13, color: isMint ? Colors.white : AppColors.textSecondary)),
+              Text(label, style: TextStyle(fontSize: 13, color: (isMint || isMinted) ? Colors.white : AppColors.textSecondary)),
             ],
           ],
         ),

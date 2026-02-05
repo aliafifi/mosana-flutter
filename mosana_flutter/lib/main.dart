@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/colors.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/splash/splash_screen.dart';
 
 void main() {
   runApp(const MosanaApp());
@@ -18,7 +18,7 @@ class MosanaApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.pureBlack,
         primaryColor: AppColors.mosanaPurple,
       ),
-      home: const HomeScreen(), // Changed from OnboardingScreen
+      home: const SplashScreen(), // Start with Splash Screen
     );
   }
 }

@@ -48,7 +48,7 @@ class MockData {
       'tips': 8.2,
       'shares': 5,
       'isLiked': false,
-      'isMinted': false,
+      'isMinted': true, // ← MINTED! 🌟
     },
     {
       'id': '3',
@@ -80,7 +80,7 @@ class MockData {
       'tips': 22.1,
       'shares': 19,
       'isLiked': false,
-      'isMinted': false,
+      'isMinted': true, // ← MINTED! 🌟
     },
   ];
 }

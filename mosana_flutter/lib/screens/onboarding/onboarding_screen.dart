@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/colors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../home/home_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -228,9 +230,16 @@ class OnboardingScreen extends StatelessWidget {
         ],
       ),
       child: ElevatedButton(
-        onPressed: () {
-          // TODO: Implement wallet connection
-          print('Connect Wallet pressed');
+        onPressed: () async {
+          // Save that user has completed onboarding
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isFirstTime', false);
+          
+          // Navigate to Home
+          if (!context.mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
@@ -242,14 +251,14 @@ class OnboardingScreen extends StatelessWidget {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
+          children: const [
+            Icon(
               Icons.account_balance_wallet,
               size: 20,
               color: Colors.white,
             ),
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12),
+            Text(
               'Connect Wallet',
               style: TextStyle(
                 fontSize: 16,
