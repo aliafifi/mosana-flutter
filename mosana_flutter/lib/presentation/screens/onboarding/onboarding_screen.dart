@@ -1,323 +1,307 @@
 import 'package:flutter/material.dart';
-import '../../../core/config/colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/config/colors.dart';
+import '../../widgets/common/gradient_button.dart';
 import '../home/home_screen.dart';
+import '../auth/connect_wallet_screen.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<OnboardingPage> _pages = [
+    const OnboardingPage(
+      icon: Icons.flash_on,
+      iconColor: Color(0xFFFFD700),
+      title: '⚡ Lightning Fast',
+      subtitle: 'Built on Solana, the fastest blockchain',
+      description: 'Instant tips, zero lag, and seamless interactions. Experience social media at the speed of light.',
+    ),
+    const OnboardingPage(
+      icon: Icons.shield_outlined,
+      iconColor: Color(0xFF10B981),
+      title: '🌱 Fair & Ethical',
+      subtitle: 'No bots, no speculation',
+      description: 'Real humans, real value. Get 5× rewards for being verified. Every interaction is meaningful.',
+    ),
+    const OnboardingPage(
+      icon: Icons.favorite_border,
+      iconColor: Color(0xFFEF4444),
+      title: '❤️ Social Impact',
+      subtitle: 'Make a difference while you earn',
+      description: 'Every tip funds real-world social good. Transparent, on-chain charity contributions.',
+    ),
+  ];
+
+  void _onPageChanged(int page) {
+    setState(() {
+      _currentPage = page;
+    });
+  }
+
+  Future<void> _onGetStarted() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isFirstTime', false);
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => const ConnectWalletScreen(),
+      ),
+    );
+  }
+
+  void _onSkip() {
+    _pageController.animateToPage(
+      _pages.length - 1,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _onNext() {
+    if (_currentPage < _pages.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-            child: Column(
-              children: [
-                // Logo Section
-                const SizedBox(height: 20),
-                _buildLogo(),
-                const SizedBox(height: 32),
-                
-                // Tagline
-                _buildTagline(),
-                const SizedBox(height: 16),
-                
-                // Subtitle
-                _buildSubtitle(),
-                const SizedBox(height: 48),
-                
-                // Feature Cards
-                _buildFeatureCard(
-                  icon: Icons.flash_on,
-                  title: '5× Multiplier',
-                  description: 'Earn up to 5× rewards for verified humans',
+        child: Stack(
+          children: [
+            // Background gradient
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topRight,
+                    radius: 1.5,
+                    colors: [
+                      AppColors.mosanaPurple.withOpacity(0.1),
+                      AppColors.pureBlack,
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 14),
-                _buildFeatureCard(
-                  icon: Icons.shield_outlined,
-                  title: 'Conscious Finance',
-                  description: 'Ethical, fair, and transparent',
-                ),
-                const SizedBox(height: 14),
-                _buildFeatureCard(
-                  icon: Icons.favorite_border,
-                  title: 'Social Good',
-                  description: 'Every tip funds real-world impact',
-                ),
-                const SizedBox(height: 32),
-                
-                // Connect Wallet Button
-                _buildConnectButton(context),
-                const SizedBox(height: 32),
-                
-                // Supported Wallets
-                _buildSupportedWallets(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLogo() {
-    return Column(
-      children: [
-        // Logo Image
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.mosanaPurple.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
               ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              'assets/images/mosana-logo.png',
-              fit: BoxFit.contain,
             ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        
-        // Mosana Title with Gradient
-        ShaderMask(
-          shaderCallback: (bounds) => AppColors.primaryGradient.createShader(bounds),
-          child: const Text(
-            'Mosana',
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: -1.2,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        
-        // Subtitle
-        Text(
-          'ETHICAL SOCIALFI',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-            letterSpacing: 2,
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildTagline() {
-    return const Text(
-      'Give More. Earn More. Impact More.',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.bold,
-        color: Colors.white,
-        height: 1.3,
-        letterSpacing: -0.5,
+            // Skip button
+            if (_currentPage < _pages.length - 1)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: TextButton(
+                  onPressed: _onSkip,
+                  child: Text(
+                    'Skip',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+
+            // Page view
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              itemCount: _pages.length,
+              itemBuilder: (context, index) {
+                return _pages[index];
+              },
+            ),
+
+            // Bottom section with indicators and button
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Page indicators
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                        (index) => _buildPageIndicator(index),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Button
+                    if (_currentPage == _pages.length - 1)
+                      GradientButton(
+                        text: 'Get Started',
+                        onPressed: _onGetStarted,
+                        icon: Icons.rocket_launch,
+                        width: double.infinity,
+                      )
+                    else
+                      GradientButton(
+                        text: 'Next',
+                        onPressed: _onNext,
+                        icon: Icons.arrow_forward,
+                        width: double.infinity,
+                        style: ButtonStyle.secondary,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSubtitle() {
-    return Text(
-      'The first ethical SocialFi platform on Solana where your generosity is rewarded. Connect your wallet to start your journey.',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 15,
-        color: AppColors.textSecondary,
-        height: 1.6,
-      ),
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
+  Widget _buildPageIndicator(int index) {
+    final isActive = index == _currentPage;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: isActive ? 24 : 8,
+      height: 8,
       decoration: BoxDecoration(
-        color: AppColors.cardSurface.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.mosanaPurple.withOpacity(0.2),
-          width: 1,
-        ),
+        gradient: isActive
+            ? AppColors.primaryGradient
+            : null,
+        color: isActive ? null : AppColors.textSecondary.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: Row(
+    );
+  }
+}
+
+class OnboardingPage extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final String description;
+
+  const OnboardingPage({
+    super.key,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.mosanaPurple.withOpacity(0.4),
-                  blurRadius: 20,
-                ),
-              ],
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: 60),
 
-  Widget _buildConnectButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.mosanaPurple.withOpacity(0.4),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
+          // Icon with animated glow
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 600),
+            builder: (context, value, child) {
+              return Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      iconColor.withOpacity(0.2 * value),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: iconColor.withOpacity(0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 40,
+                      color: iconColor,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: () async {
-          // Save that user has completed onboarding
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isFirstTime', false);
-          
-          // Navigate to Home
-          if (!context.mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.account_balance_wallet,
-              size: 20,
+
+          const SizedBox(height: 48),
+
+          // Title
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
-            SizedBox(width: 12),
-            Text(
-              'Connect Wallet',
-              style: TextStyle(
-                fontSize: 16,
+            textAlign: TextAlign.center,
+          ),
+
+          const SizedBox(height: 12),
+
+          // Subtitle with gradient
+          ShaderMask(
+            shaderCallback: (bounds) =>
+                AppColors.primaryGradient.createShader(bounds),
+            child: Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
+              textAlign: TextAlign.center,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSupportedWallets() {
-    return Column(
-      children: [
-        Text(
-          'SUPPORTED WALLETS',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
-            letterSpacing: 2,
           ),
-        ),
-        const SizedBox(height: 12),
-        
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildWalletBadge('Phantom'),
-            const SizedBox(width: 10),
-            _buildWalletBadge('Solflare'),
-            const SizedBox(width: 10),
-            _buildWalletBadge('Saga'),
-          ],
-        ),
-      ],
-    );
-  }
 
-  Widget _buildWalletBadge(String name) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.cardSurface.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.mosanaPurple.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: Text(
-        name,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: AppColors.textSecondary,
-        ),
+          const SizedBox(height: 24),
+
+          // Description
+          Text(
+            description,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
+          ),
+
+          const Spacer(),
+        ],
       ),
     );
   }
