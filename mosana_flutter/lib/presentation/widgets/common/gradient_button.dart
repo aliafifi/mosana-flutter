@@ -101,9 +101,9 @@ class _GradientButtonState extends State<GradientButton>
           ],
         );
       case GradientButtonStyle.outline:
-        return null; // No gradient for outline
+        return LinearGradient(colors: [Colors.transparent, Colors.transparent]); // Transparent gradient for outline
       case GradientButtonStyle.ghost:
-        return null; // No gradient for ghost
+        return LinearGradient(colors: [Colors.transparent, Colors.transparent]); // Transparent gradient for ghost
       case GradientButtonStyle.gold:
         return AppColors.goldGradient;
       case GradientButtonStyle.destructive:
