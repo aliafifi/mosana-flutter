@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/colors.dart';
 
+/// Button style variants for GradientButton
+enum GradientButtonStyle {
+  primary,
+  secondary,
+  outline,
+  ghost,
+  gold,
+  destructive,
+}
+
 /// Gradient button widget with various styles
 class GradientButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
-  final ButtonStyle style;
+  final GradientButtonStyle style;
   final IconData? icon;
   final double? width;
   final double height;
@@ -17,7 +27,7 @@ class GradientButton extends StatefulWidget {
     required this.text,
     this.onPressed,
     this.isLoading = false,
-    this.style = ButtonStyle.primary,
+    this.style = GradientButtonStyle.primary,
     this.icon,
     this.width,
     this.height = 52,
@@ -81,18 +91,18 @@ class _GradientButtonState extends State<GradientButton>
     }
 
     switch (widget.style) {
-      case ButtonStyle.primary:
+      case GradientButtonStyle.primary:
         return AppColors.primaryGradient;
-      case ButtonStyle.secondary:
+      case GradientButtonStyle.secondary:
         return LinearGradient(
           colors: [
             Colors.grey.shade800,
             Colors.grey.shade900,
           ],
         );
-      case ButtonStyle.gold:
+      case GradientButtonStyle.gold:
         return AppColors.goldGradient;
-      case ButtonStyle.destructive:
+      case GradientButtonStyle.destructive:
         return LinearGradient(
           colors: [
             AppColors.red,
@@ -168,11 +178,4 @@ class _GradientButtonState extends State<GradientButton>
       ),
     );
   }
-}
-
-enum ButtonStyle {
-  primary,
-  secondary,
-  gold,
-  destructive,
 }

@@ -166,7 +166,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         onPressed: _onNext,
                         icon: Icons.arrow_forward,
                         width: double.infinity,
-                        style: ButtonStyle.secondary,
+                        style: GradientButtonStyle.secondary,
                       ),
                   ],
                 ),
