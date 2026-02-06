@@ -100,6 +100,10 @@ class _GradientButtonState extends State<GradientButton>
             Colors.grey.shade900,
           ],
         );
+      case GradientButtonStyle.outline:
+        return null; // No gradient for outline
+      case GradientButtonStyle.ghost:
+        return null; // No gradient for ghost
       case GradientButtonStyle.gold:
         return AppColors.goldGradient;
       case GradientButtonStyle.destructive:
