@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/config/colors.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables (catch error if .env not found)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    print('Warning: .env file not found, using defaults');
+  }
+  
   runApp(const MosanaApp());
 }
 
