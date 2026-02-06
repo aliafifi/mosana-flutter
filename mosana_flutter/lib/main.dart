@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'config/colors.dart';
-import 'screens/splash/splash_screen.dart';
+import 'core/config/colors.dart';
+import 'presentation/screens/splash/splash_screen.dart';
 
 void main() {
   runApp(const MosanaApp());
