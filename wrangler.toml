@@ -3,7 +3,7 @@ compatibility_date = "2024-01-01"
 
 # Build configuration
 [build]
-command = "cd mosana_flutter && flutter build web --release --web-renderer canvaskit"
+command = "bash build.sh"
 cwd = "."
 watch_dir = "mosana_flutter"
 
@@ -11,9 +11,7 @@ watch_dir = "mosana_flutter"
 format = "directory"
 dir = "mosana_flutter/build/web"
 
-# Environment variables for build
-[env.production]
-FLUTTER_VERSION = "3.16.0"
+# No environment variables needed - build.sh handles everything
 
 # Routes
 [[routes]]
