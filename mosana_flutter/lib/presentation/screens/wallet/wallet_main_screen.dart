@@ -291,6 +291,7 @@ class WalletMainScreen extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 
