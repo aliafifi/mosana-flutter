@@ -193,16 +193,16 @@ class FeedNotifier extends StateNotifier<FeedState> {
   // Helper methods
   List<Map<String, dynamic>> _getPosts() {
     return switch (state) {
-      _FeedStateLoaded(posts: final p) => p,
-      _FeedStateLoadingMore(posts: final p) => p,
+      FeedStateLoaded(posts: final p) => p,
+      FeedStateLoadingMore(posts: final p) => p,
       _ => [],
     };
   }
 
   bool _hasMore() {
     return switch (state) {
-      _FeedStateLoaded(hasMore: final h) => h,
-      _FeedStateLoadingMore(hasMore: final h) => h,
+      FeedStateLoaded(hasMore: final h) => h,
+      FeedStateLoadingMore(hasMore: final h) => h,
       _ => false,
     };
   }
@@ -212,51 +212,51 @@ class FeedNotifier extends StateNotifier<FeedState> {
 sealed class FeedState {
   const FeedState();
 
-  const factory FeedState.initial() = _FeedStateInitial;
-  const factory FeedState.loading({bool isRefresh}) = _FeedStateLoading;
+  const factory FeedState.initial() = FeedStateInitial;
+  const factory FeedState.loading({bool isRefresh}) = FeedStateLoading;
   const factory FeedState.loaded({
     required List<Map<String, dynamic>> posts,
     bool hasMore,
-  }) = _FeedStateLoaded;
+  }) = FeedStateLoaded;
   const factory FeedState.loadingMore({
     required List<Map<String, dynamic>> posts,
     bool hasMore,
-  }) = _FeedStateLoadingMore;
-  const factory FeedState.error(String message) = _FeedStateError;
+  }) = FeedStateLoadingMore;
+  const factory FeedState.error(String message) = FeedStateError;
 }
 
-class _FeedStateInitial extends FeedState {
-  const _FeedStateInitial();
+class FeedStateInitial extends FeedState {
+  const FeedStateInitial();
 }
 
-class _FeedStateLoading extends FeedState {
+class FeedStateLoading extends FeedState {
   final bool isRefresh;
-  const _FeedStateLoading({this.isRefresh = false});
+  const FeedStateLoading({this.isRefresh = false});
 }
 
-class _FeedStateLoaded extends FeedState {
+class FeedStateLoaded extends FeedState {
   final List<Map<String, dynamic>> posts;
   final bool hasMore;
 
-  const _FeedStateLoaded({
+  const FeedStateLoaded({
     required this.posts,
     this.hasMore = false,
   });
 }
 
-class _FeedStateLoadingMore extends FeedState {
+class FeedStateLoadingMore extends FeedState {
   final List<Map<String, dynamic>> posts;
   final bool hasMore;
 
-  const _FeedStateLoadingMore({
+  const FeedStateLoadingMore({
     required this.posts,
     this.hasMore = false,
   });
 }
 
-class _FeedStateError extends FeedState {
+class FeedStateError extends FeedState {
   final String message;
-  const _FeedStateError(this.message);
+  const FeedStateError(this.message);
 }
 
 // ===================== POST ACTIONS =====================

@@ -132,7 +132,7 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 
   /// Clear error
   void clearError() {
-    if (state is _AuthStateError) {
+    if (state is AuthStateError) {
       state = const AuthState.unauthenticated();
     }
   }
@@ -142,44 +142,44 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
 sealed class AuthState {
   const AuthState();
 
-  const factory AuthState.initial() = _AuthStateInitial;
-  const factory AuthState.loading() = _AuthStateLoading;
+  const factory AuthState.initial() = AuthStateInitial;
+  const factory AuthState.loading() = AuthStateLoading;
   const factory AuthState.authenticated({
     required String walletAddress,
     required String username,
     bool isNewUser,
-  }) = _AuthStateAuthenticated;
-  const factory AuthState.unauthenticated() = _AuthStateUnauthenticated;
-  const factory AuthState.error(String message) = _AuthStateError;
+  }) = AuthStateAuthenticated;
+  const factory AuthState.unauthenticated() = AuthStateUnauthenticated;
+  const factory AuthState.error(String message) = AuthStateError;
 }
 
-class _AuthStateInitial extends AuthState {
-  const _AuthStateInitial();
+class AuthStateInitial extends AuthState {
+  const AuthStateInitial();
 }
 
-class _AuthStateLoading extends AuthState {
-  const _AuthStateLoading();
+class AuthStateLoading extends AuthState {
+  const AuthStateLoading();
 }
 
-class _AuthStateAuthenticated extends AuthState {
+class AuthStateAuthenticated extends AuthState {
   final String walletAddress;
   final String username;
   final bool isNewUser;
 
-  const _AuthStateAuthenticated({
+  const AuthStateAuthenticated({
     required this.walletAddress,
     required this.username,
     this.isNewUser = false,
   });
 }
 
-class _AuthStateUnauthenticated extends AuthState {
-  const _AuthStateUnauthenticated();
+class AuthStateUnauthenticated extends AuthState {
+  const AuthStateUnauthenticated();
 }
 
-class _AuthStateError extends AuthState {
+class AuthStateError extends AuthState {
   final String message;
-  const _AuthStateError(this.message);
+  const AuthStateError(this.message);
 }
 
 // ===================== CONVENIENCE GETTERS =====================
@@ -187,13 +187,13 @@ class _AuthStateError extends AuthState {
 /// Check if user is authenticated
 final isAuthenticatedProvider = Provider<bool>((ref) {
   final authState = ref.watch(authStateProvider);
-  return authState is _AuthStateAuthenticated;
+  return authState is AuthStateAuthenticated;
 });
 
 /// Get current wallet address (null if not authenticated)
 final currentWalletProvider = Provider<String?>((ref) {
   final authState = ref.watch(authStateProvider);
-  if (authState is _AuthStateAuthenticated) {
+  if (authState is AuthStateAuthenticated) {
     return authState.walletAddress;
   }
   return null;
@@ -202,7 +202,7 @@ final currentWalletProvider = Provider<String?>((ref) {
 /// Get current username (null if not authenticated)
 final currentUsernameProvider = Provider<String?>((ref) {
   final authState = ref.watch(authStateProvider);
-  if (authState is _AuthStateAuthenticated) {
+  if (authState is AuthStateAuthenticated) {
     return authState.username;
   }
   return null;

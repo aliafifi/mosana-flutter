@@ -58,7 +58,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Listen to auth state
     final authState = ref.watch(authStateProvider);
     final currentUser = switch (authState) {
-      _AuthStateAuthenticated(username: final name) => name,
+      AuthStateAuthenticated(username: final name) => name,
       _ => null,
     };
 
@@ -194,18 +194,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: AppColors.cardSurface,
       child: switch (feedState) {
         // Initial loading
-        _FeedStateInitial() || _FeedStateLoading(isRefresh: false) => _buildLoading(),
+        FeedStateInitial() || FeedStateLoading(isRefresh: false) => _buildLoading(),
 
         // Loaded with posts
-        _FeedStateLoaded(posts: final posts) ||
-        _FeedStateLoadingMore(posts: final posts) =>
-          _buildPostsList(posts, feedState is _FeedStateLoadingMore),
+        FeedStateLoaded(posts: final posts) ||
+        FeedStateLoadingMore(posts: final posts) =>
+          _buildPostsList(posts, feedState is FeedStateLoadingMore),
 
         // Refreshing (show current posts)
-        _FeedStateLoading(isRefresh: true) => _buildLoading(),
+        FeedStateLoading(isRefresh: true) => _buildLoading(),
 
         // Error
-        _FeedStateError(message: final error) => _buildError(error),
+        FeedStateError(message: final error) => _buildError(error),
       },
     );
   }
