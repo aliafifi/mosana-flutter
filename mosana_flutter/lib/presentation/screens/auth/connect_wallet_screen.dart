@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/config/colors.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/glass_card.dart';
-import '../home/home_screen.dart';
+import '../../navigation/main_navigation_screen.dart';
 
 class ConnectWalletScreen extends StatefulWidget {
   const ConnectWalletScreen({super.key});
@@ -48,7 +48,7 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
     // Navigate to home
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
+        builder: (_) => const MainNavigationScreen(),
       ),
     );
   }
