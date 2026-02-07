@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../core/config/colors.dart';
-import '../../../data/mock_data.dart';
+// import '../../../data/mock_data.dart'; // REMOVED: Using real API now
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/user_avatar.dart';
 
@@ -13,14 +13,17 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  // TODO: Connect to NotificationRepository
+  final List<Map<String, dynamic>> _notifications = [];
+  
   void _markAllAsRead() {
-    // TODO: Mark all as read
+    // TODO: Mark all as read via API
     setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final unreadCount = MockData.notifications.where((n) => !n['read']).length;
+    final unreadCount = _notifications.where((n) => !n['read']).length;
 
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
@@ -51,19 +54,87 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        itemCount: MockData.notifications.length,
-        itemBuilder: (context, index) {
-          final notification = MockData.notifications[index];
-          return _NotificationCard(
-            notification: notification,
-            onTap: () {
-              // TODO: Handle notification tap
-              print('Tapped notification ${notification['_id']}');
-            },
-          );
-        },
+      body: _notifications.isEmpty
+          ? _buildEmptyState()
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final notification = _notifications[index];
+                return _NotificationCard(
+                  notification: notification,
+                  onTap: () {
+                    // TODO: Handle notification tap
+                    print('Tapped notification ${notification['_id']}');
+                  },
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.notifications_none,
+            size: 80,
+            color: AppColors.textSecondary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'No notifications yet',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'When you get notifications, they\'ll appear here',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            decoration: BoxDecoration(
+              color: AppColors.cardSurface.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.mosanaPurple.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: AppColors.mosanaPurple,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Notifications are coming soon! WebSocket real-time integration in progress.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,7 +5,7 @@ import '../../widgets/common/user_avatar.dart';
 import '../../widgets/post/post_card.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/post_model.dart';
-import '../../../data/mock_data.dart';
+// import '../../../data/mock_data.dart'; // REMOVED: Using real API now
 
 /// Search and explore screen
 class SearchExploreScreen extends StatefulWidget {
@@ -111,21 +111,13 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
   }
   
   List<Map<String, dynamic>> get _filteredUsers {
-    if (_searchQuery.isEmpty) return MockData.users;
-    return MockData.users
-        .where((user) => (user['username'] as String? ?? '').toLowerCase().contains(_searchQuery))
-        .toList();
+    // TODO: Connect to UserRepository for real user search
+    return [];
   }
   
   List<Map<String, dynamic>> get _filteredPosts {
-    if (_searchQuery.isEmpty) return MockData.posts;
-    return MockData.posts
-        .where((post) {
-          final content = (post['content'] as String? ?? '').toLowerCase();
-          final username = (post['author']?['username'] as String? ?? '').toLowerCase();
-          return content.contains(_searchQuery) || username.contains(_searchQuery);
-        })
-        .toList();
+    // TODO: Connect to PostRepository for real post search
+    return [];
   }
   
   @override
