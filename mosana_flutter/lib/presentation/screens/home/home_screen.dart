@@ -47,42 +47,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pureBlack,
-      body: Stack(
-        children: [
-          // Background gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topRight,
-                  radius: 1.5,
-                  colors: [
-                    AppColors.mosanaPurple.withOpacity(0.1),
-                    AppColors.pureBlack,
-                  ],
-                ),
+    return Stack(
+      children: [
+        // Background gradient
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topRight,
+                radius: 1.5,
+                colors: [
+                  AppColors.mosanaPurple.withOpacity(0.1),
+                  AppColors.pureBlack,
+                ],
               ),
             ),
           ),
+        ),
 
-          // Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
+        // Content
+        SafeArea(
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(),
 
-                // Feed
-                Expanded(
-                  child: _buildFeed(),
-                ),
-              ],
-            ),
+              // Feed
+              Expanded(
+                child: _buildFeed(),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

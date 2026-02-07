@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/colors.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/explore/search_explore_screen.dart';
-import '../screens/wallet/wallet_settings_screen.dart';
+import '../screens/wallet/wallet_main_screen.dart';
 
 /// Main navigation container that holds all primary screens
 /// Uses indexed stack to preserve state across tab switches
@@ -21,7 +21,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     const HomeScreen(),
     const SearchExploreScreen(),
     const Center(child: Text('DAO Coming Soon', style: TextStyle(color: Colors.white))), // Placeholder
-    const WalletSettingsScreen(),
+    const WalletMainScreen(),
   ];
 
   void _onBottomNavTap(int index) {

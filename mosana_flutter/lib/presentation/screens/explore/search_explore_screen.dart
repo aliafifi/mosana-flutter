@@ -130,47 +130,44 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
   
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.pureBlack,
-      body: Stack(
-        children: [
-          // Background gradient
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment.topCenter,
-                  radius: 1.5,
-                  colors: [
-                    AppColors.mosanaPurple.withOpacity(0.15),
-                    AppColors.pureBlack,
-                  ],
-                ),
+    return Stack(
+      children: [
+        // Background gradient
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topCenter,
+                radius: 1.5,
+                colors: [
+                  AppColors.mosanaPurple.withOpacity(0.15),
+                  AppColors.pureBlack,
+                ],
               ),
             ),
           ),
-          
-          // Content
-          SafeArea(
-            child: Column(
-              children: [
-                // Search bar
-                _buildSearchBar(),
-                
-                // Tabs (only show when not searching)
-                if (!_isSearching) _buildTabs(),
-                
-                // Content
-                Expanded(
-                  child: _isSearching
-                      ? _buildSearchResults()
-                      : _buildExploreContent(),
-                ),
-              ],
-            ),
+        ),
+        
+        // Content
+        SafeArea(
+          child: Column(
+            children: [
+              // Search bar
+              _buildSearchBar(),
+              
+              // Tabs (only show when not searching)
+              if (!_isSearching) _buildTabs(),
+              
+              // Content
+              Expanded(
+                child: _isSearching
+                    ? _buildSearchResults()
+                    : _buildExploreContent(),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
   
