@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/config/colors.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/user_avatar.dart';
+import '../../widgets/post/post_card.dart';
 import '../../../data/models/post_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 /// Screen for minting a post as an NFT
 class MintNFTScreen extends StatefulWidget {
@@ -20,17 +21,59 @@ class MintNFTScreen extends StatefulWidget {
 }
 
 class _MintNFTScreenState extends State<MintNFTScreen> {
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  
   bool _isProcessing = false;
-  String _selectedNetwork = 'mainnet'; // mainnet or devnet
+  int _selectedEdition = 1; // 1 = Single Edition, 10 = Limited (10), 0 = Unlimited
   
-  // NFT minting costs (in SOL)
-  static const double _mintCost = 0.01;
-  static const double _networkFee = 0.000005;
-  static const double _storageFee = 0.002;
+  final List<NFTEdition> _editions = [
+    NFTEdition(
+      value: 1,
+      name: 'Single Edition',
+      description: '1 of 1 - Unique NFT',
+      icon: '💎',
+      mintCost: 0.5,
+    ),
+    NFTEdition(
+      value: 10,
+      name: 'Limited Edition',
+      description: 'Limited to 10 copies',
+      icon: '🎨',
+      mintCost: 0.3,
+    ),
+    NFTEdition(
+      value: 0,
+      name: 'Open Edition',
+      description: 'Unlimited minting',
+      icon: '♾️',
+      mintCost: 0.1,
+    ),
+  ];
   
-  double get _totalCost => _mintCost + _networkFee + _storageFee;
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill with post content
+    _titleController.text = '${widget.post.author.username}\'s Post';
+    _descriptionController.text = widget.post.content.length > 100 
+        ? widget.post.content.substring(0, 100) + '...'
+        : widget.post.content;
+  }
+  
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
   
   Future<void> _mintNFT() async {
+    if (_titleController.text.trim().isEmpty) {
+      _showError('Please enter an NFT title');
+      return;
+    }
+    
     setState(() {
       _isProcessing = true;
     });
@@ -39,10 +82,10 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
       // TODO: Implement actual NFT minting
       // 1. Get connected wallet
       // 2. Upload metadata to IPFS/Arweave
-      // 3. Create NFT mint transaction
-      // 4. Sign with wallet
-      // 5. Send to blockchain
-      // 6. Update backend with NFT data
+      // 3. Create NFT on Solana (Metaplex)
+      // 4. Sign transaction with wallet
+      // 5. Confirm on blockchain
+      // 6. Update backend with NFT details
       
       await Future.delayed(const Duration(seconds: 3)); // Simulate minting
       
@@ -78,7 +121,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
   void _showSuccess() {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('✨ NFT minted successfully! Post is now immortal.'),
+        content: const Text('✨ NFT minted successfully! Your post is now immortal.'),
         backgroundColor: AppColors.green,
         duration: const Duration(seconds: 4),
       ),
@@ -87,6 +130,10 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final selectedEdition = _editions.firstWhere((e) => e.value == _selectedEdition);
+    final gasFee = 0.000005; // SOL
+    final totalCost = selectedEdition.mintCost + gasFee;
+    
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
       appBar: AppBar(
@@ -140,18 +187,18 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // NFT Metadata
+                  // NFT metadata
                   _buildNFTMetadata(),
                   
                   const SizedBox(height: 24),
                   
-                  // Network selection
-                  _buildNetworkSelection(),
+                  // Edition selection
+                  _buildEditionSelection(),
                   
                   const SizedBox(height: 24),
                   
-                  // Cost breakdown
-                  _buildCostBreakdown(),
+                  // Minting details
+                  _buildMintingDetails(selectedEdition, gasFee, totalCost),
                   
                   const SizedBox(height: 24),
                   
@@ -181,43 +228,48 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             gradient: AppColors.goldGradient,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.diamond,
-                color: Colors.white,
-                size: 28,
+              const Text(
+                '✨',
+                style: TextStyle(fontSize: 16),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Make it Immortal',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Mint this post as an NFT on Solana',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 8),
+              Text(
+                'IMMORTALIZE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Mint this post as an NFT',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Turn this moment into a permanent piece of digital art on the Solana blockchain.',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            height: 1.5,
           ),
         ),
       ],
@@ -255,30 +307,18 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(
-                              widget.post.author.username,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            if (widget.post.author.isVerified) ...[
-                              const SizedBox(width: 4),
-                              Icon(
-                                Icons.verified,
-                                size: 16,
-                                color: AppColors.mosanaBlue,
-                              ),
-                            ],
-                          ],
+                        Text(
+                          widget.post.author.username,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                         Text(
-                          '@${widget.post.author.username}',
+                          widget.post.author.walletAddress.substring(0, 8) + '...',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
                         ),
@@ -287,57 +327,48 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 16),
-              
+              const SizedBox(height: 12),
               // Content
               Text(
                 widget.post.content,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 14,
                   color: Colors.white,
                   height: 1.5,
                 ),
-                maxLines: 6,
+                maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
-              
-              // Image if exists
+              // Image if present
               if (widget.post.imageUrl != null) ...[
                 const SizedBox(height: 12),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.post.imageUrl!,
+                  child: Image.network(
+                    widget.post.imageUrl!,
+                    height: 150,
                     width: double.infinity,
-                    height: 200,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      height: 200,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 150,
                       color: AppColors.cardSurface,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: AppColors.textSecondary,
                       ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      height: 200,
-                      color: AppColors.cardSurface,
-                      child: const Icon(Icons.image, color: Colors.white54),
                     ),
                   ),
                 ),
               ],
-              
-              const SizedBox(height: 16),
-              
+              const SizedBox(height: 12),
               // Stats
               Row(
                 children: [
-                  _buildStatBadge(Icons.favorite, widget.post.likesCount.toString()),
-                  const SizedBox(width: 12),
-                  _buildStatBadge(Icons.comment, widget.post.commentsCount.toString()),
-                  const SizedBox(width: 12),
-                  _buildStatBadge(Icons.volunteer_activism, '\$${widget.post.tipsAmount.toStringAsFixed(2)}'),
+                  _buildStatChip('❤️', widget.post.likesCount.toString()),
+                  const SizedBox(width: 8),
+                  _buildStatChip('💬', widget.post.commentsCount.toString()),
+                  const SizedBox(width: 8),
+                  _buildStatChip('💸', '\$${widget.post.tipsAmount.toStringAsFixed(0)}'),
                 ],
               ),
             ],
@@ -347,24 +378,24 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
     );
   }
   
-  Widget _buildStatBadge(IconData icon, String value) {
+  Widget _buildStatChip(String icon, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.cardSurface.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
+          Text(icon, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 4),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: Colors.white,
             ),
           ),
         ],
@@ -388,15 +419,43 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
         GlassCard(
           child: Column(
             children: [
-              _buildMetadataRow('Name', 'Mosana Post #${widget.post.id}'),
-              const Divider(height: 24, color: Colors.white24),
-              _buildMetadataRow('Creator', '@${widget.post.author.username}'),
-              const Divider(height: 24, color: Colors.white24),
-              _buildMetadataRow('Blockchain', 'Solana'),
-              const Divider(height: 24, color: Colors.white24),
-              _buildMetadataRow('Standard', 'Metaplex NFT'),
-              const Divider(height: 24, color: Colors.white24),
-              _buildMetadataRow('Storage', 'IPFS (Permanent)'),
+              // Title
+              TextField(
+                controller: _titleController,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'NFT Title',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  hintText: 'Give your NFT a name',
+                  hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                maxLength: 50,
+              ),
+              const Divider(height: 16, color: Colors.white24),
+              // Description
+              TextField(
+                controller: _descriptionController,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  hintText: 'Describe this moment...',
+                  hintStyle: TextStyle(color: AppColors.textSecondary.withOpacity(0.5)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                maxLines: 3,
+                maxLength: 200,
+              ),
             ],
           ),
         ),
@@ -404,35 +463,12 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
     );
   }
   
-  Widget _buildMetadataRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildNetworkSelection() {
+  Widget _buildEditionSelection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Select Network',
+          'Edition Type',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -440,92 +476,92 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildNetworkOption(
-                'Mainnet',
-                'mainnet',
-                'Production network',
-                recommended: true,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildNetworkOption(
-                'Devnet',
-                'devnet',
-                'Testing network',
-              ),
-            ),
-          ],
+        ...List.generate(
+          _editions.length,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildEditionOption(_editions[index]),
+          ),
         ),
       ],
     );
   }
   
-  Widget _buildNetworkOption(String label, String value, String description, {bool recommended = false}) {
-    final isSelected = _selectedNetwork == value;
+  Widget _buildEditionOption(NFTEdition edition) {
+    final isSelected = _selectedEdition == edition.value;
     
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedNetwork = value;
+          _selectedEdition = edition.value;
         });
       },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? AppColors.primaryGradient
-              : null,
-          color: isSelected ? null : AppColors.cardSurface.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.mosanaPurple
-                : AppColors.cardSurface,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: GlassCard(
+        variant: isSelected ? GlassCardVariant.highlighted : GlassCardVariant.standard,
+        child: Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
+            // Icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: isSelected ? AppColors.goldGradient : null,
+                color: !isSelected ? AppColors.cardSurface : null,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  edition.icon,
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    edition.name,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-                if (recommended)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '⭐',
-                      style: TextStyle(fontSize: 10),
+                  const SizedBox(height: 4),
+                  Text(
+                    edition.description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
                     ),
                   ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              description,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected 
-                    ? Colors.white.withOpacity(0.8)
-                    : AppColors.textSecondary,
+                ],
               ),
+            ),
+            // Cost
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${edition.mintCost} SOL',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.gold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Radio
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+              color: isSelected ? AppColors.gold : AppColors.textSecondary,
             ),
           ],
         ),
@@ -533,42 +569,47 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
     );
   }
   
-  Widget _buildCostBreakdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Cost Breakdown',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        GlassCard(
-          variant: GlassCardVariant.highlighted,
-          child: Column(
+  Widget _buildMintingDetails(NFTEdition edition, double fee, double total) {
+    return GlassCard(
+      variant: GlassCardVariant.highlighted,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              _buildCostRow('Minting Fee', '${_mintCost.toStringAsFixed(4)} SOL'),
-              const SizedBox(height: 8),
-              _buildCostRow('Network Fee', '${_networkFee.toStringAsFixed(6)} SOL', isSecondary: true),
-              const SizedBox(height: 8),
-              _buildCostRow('Storage (IPFS)', '${_storageFee.toStringAsFixed(6)} SOL', isSecondary: true),
-              const Divider(height: 24, color: Colors.white24),
-              _buildCostRow(
-                'Total Cost',
-                '${_totalCost.toStringAsFixed(4)} SOL',
-                isLarge: true,
+              Icon(Icons.receipt_long, color: AppColors.gold, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Minting Details',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 16),
+          _buildDetailRow('Edition', edition.name),
+          const SizedBox(height: 8),
+          _buildDetailRow('Mint Cost', '${edition.mintCost.toStringAsFixed(4)} SOL'),
+          const SizedBox(height: 8),
+          _buildDetailRow('Gas Fee', '${fee.toStringAsFixed(6)} SOL', isSecondary: true),
+          const SizedBox(height: 8),
+          _buildDetailRow('Storage', 'IPFS', isSecondary: true),
+          const Divider(height: 24, color: Colors.white24),
+          _buildDetailRow(
+            'Total Cost',
+            '${total.toStringAsFixed(4)} SOL',
+            isLarge: true,
+            valueColor: AppColors.gold,
+          ),
+        ],
+      ),
     );
   }
   
-  Widget _buildCostRow(String label, String value, {bool isSecondary = false, bool isLarge = false}) {
+  Widget _buildDetailRow(String label, String value, {bool isSecondary = false, bool isLarge = false, Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -585,7 +626,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
           style: TextStyle(
             fontSize: isLarge ? 18 : 14,
             fontWeight: isLarge ? FontWeight.w700 : FontWeight.w500,
-            color: isLarge ? AppColors.gold : Colors.white,
+            color: valueColor ?? (isLarge ? AppColors.gold : Colors.white),
           ),
         ),
       ],
@@ -593,59 +634,49 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
   }
   
   Widget _buildBenefits() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'NFT Benefits',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.stars, color: AppColors.gold, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'NFT Benefits',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 12),
-        _buildBenefitItem(
-          Icons.lock,
-          'Permanent',
-          'Your post is stored forever on the blockchain',
-        ),
-        const SizedBox(height: 12),
-        _buildBenefitItem(
-          Icons.security,
-          'Ownership Proof',
-          'Cryptographic proof of creation and ownership',
-        ),
-        const SizedBox(height: 12),
-        _buildBenefitItem(
-          Icons.trending_up,
-          'Tradeable',
-          'Can be bought, sold, or transferred as an asset',
-        ),
-        const SizedBox(height: 12),
-        _buildBenefitItem(
-          Icons.star,
-          'Exclusive Badge',
-          'Get a special "IMMORTAL POST" badge on your post',
-        ),
-      ],
+          const SizedBox(height: 16),
+          _buildBenefitItem('✨', 'Immortal Post', 'Permanent on blockchain'),
+          const SizedBox(height: 12),
+          _buildBenefitItem('🎨', 'Tradeable', 'Sell or trade on marketplaces'),
+          const SizedBox(height: 12),
+          _buildBenefitItem('💰', 'Royalties', 'Earn from secondary sales'),
+          const SizedBox(height: 12),
+          _buildBenefitItem('🏆', 'Exclusive', 'Limited edition collectible'),
+        ],
+      ),
     );
   }
   
-  Widget _buildBenefitItem(IconData icon, String title, String description) {
+  Widget _buildBenefitItem(String icon, String title, String description) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
             color: AppColors.gold.withOpacity(0.2),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: AppColors.gold,
+          child: Center(
+            child: Text(icon, style: const TextStyle(fontSize: 16)),
           ),
         ),
         const SizedBox(width: 12),
@@ -661,13 +692,11 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 4),
               Text(
                 description,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: AppColors.textSecondary,
-                  height: 1.4,
                 ),
               ),
             ],
@@ -682,7 +711,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
       text: _isProcessing ? 'Minting...' : 'Mint NFT',
       onPressed: _isProcessing ? null : _mintNFT,
       isLoading: _isProcessing,
-      icon: Icons.diamond,
+      icon: Icons.auto_awesome,
       style: GradientButtonStyle.gold,
     );
   }
@@ -707,7 +736,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Once minted, this post becomes a permanent NFT on the Solana blockchain. This action cannot be undone.',
+              'Your NFT will be stored on IPFS and minted on Solana. You\'ll retain ownership and can trade it on any Solana marketplace.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,
@@ -719,4 +748,21 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
       ),
     );
   }
+}
+
+/// NFT Edition model
+class NFTEdition {
+  final int value; // 0 = unlimited, 1 = single, 10 = limited
+  final String name;
+  final String description;
+  final String icon;
+  final double mintCost; // SOL
+  
+  const NFTEdition({
+    required this.value,
+    required this.name,
+    required this.description,
+    required this.icon,
+    required this.mintCost,
+  });
 }
