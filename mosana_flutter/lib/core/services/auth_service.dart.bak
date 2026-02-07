@@ -107,7 +107,7 @@ class AuthService {
   /// TODO: Remove in production
   Future<AuthResult> connectMockWallet(String username) async {
     try {
-      _logger.logWarning('Using MOCK wallet connection (development only)');
+      _logger.warning('Using MOCK wallet connection (development only)');
 
       // Generate mock data
       final mockWallet = 'MOCK${DateTime.now().millisecondsSinceEpoch}';
@@ -171,7 +171,7 @@ class AuthService {
       final response = await _dioClient.get('/api/auth/verify');
       return response.statusCode == 200;
     } catch (e) {
-      _logger.logWarning('Token verification failed: $e');
+      _logger.warning('Token verification failed: $e');
       return false;
     }
   }
@@ -204,7 +204,7 @@ class AuthService {
         );
       } else {
         // Token expired, try to refresh
-        _logger.logWarning('Token expired, attempting refresh...');
+        _logger.warning('Token expired, attempting refresh...');
         final refreshed = await refreshToken();
         
         if (refreshed) {
@@ -233,7 +233,7 @@ class AuthService {
       try {
         await _dioClient.post('/api/auth/logout');
       } catch (e) {
-        _logger.logWarning('Backend logout notification failed: $e');
+        _logger.warning('Backend logout notification failed: $e');
       }
 
       // Clear local storage

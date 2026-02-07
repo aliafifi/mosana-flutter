@@ -13,6 +13,8 @@ class AppLogger {
     ),
   );
 
+  // ===================== STATIC METHODS =====================
+  
   /// Log debug message (static)
   static void debug(dynamic message, [dynamic error, StackTrace? stackTrace]) {
     _logger.d(message, error: error, stackTrace: stackTrace);
@@ -38,20 +40,20 @@ class AppLogger {
     _logger.f(message, error: error, stackTrace: stackTrace);
   }
 
-  // ===================== INSTANCE METHODS =====================
+  // ===================== INSTANCE METHODS (use static) =====================
   
-  /// Instance info
-  void info(dynamic message) {
+  /// Instance info - delegates to static
+  void logInfo(dynamic message) {
     AppLogger.info(message);
   }
 
-  /// Instance warning
-  void warning(dynamic message) {
+  /// Instance warning - delegates to static
+  void logWarning(dynamic message) {
     AppLogger.warning(message);
   }
 
-  /// Instance error
-  void error(dynamic message) {
+  /// Instance error - delegates to static
+  void logError(dynamic message) {
     AppLogger.error(message);
   }
 
