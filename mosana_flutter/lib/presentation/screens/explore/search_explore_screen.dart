@@ -130,45 +130,48 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
   
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Background gradient
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.topCenter,
-                radius: 1.5,
-                colors: [
-                  AppColors.mosanaPurple.withOpacity(0.15),
-                  AppColors.pureBlack,
-                ],
+    return Material(
+      color: AppColors.pureBlack,
+      child: Stack(
+        children: [
+          // Background gradient
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.5,
+                  colors: [
+                    AppColors.mosanaPurple.withOpacity(0.15),
+                    AppColors.pureBlack,
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        
-        // Content
-        SafeArea(
-          bottom: false, // Don't add padding at bottom
-          child: Column(
-            children: [
-              // Search bar
-              _buildSearchBar(),
-              
-              // Tabs (only show when not searching)
-              if (!_isSearching) _buildTabs(),
-              
-              // Content
-              Expanded(
-                child: _isSearching
-                    ? _buildSearchResults()
-                    : _buildExploreContent(),
-              ),
-            ],
+          
+          // Content
+          SafeArea(
+            bottom: false, // Don't add padding at bottom
+            child: Column(
+              children: [
+                // Search bar
+                _buildSearchBar(),
+                
+                // Tabs (only show when not searching)
+                if (!_isSearching) _buildTabs(),
+                
+                // Content
+                Expanded(
+                  child: _isSearching
+                      ? _buildSearchResults()
+                      : _buildExploreContent(),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
   
