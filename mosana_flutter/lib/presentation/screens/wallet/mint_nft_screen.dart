@@ -55,7 +55,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
   void initState() {
     super.initState();
     // Pre-fill with post content
-    _titleController.text = '${widget.post.author.username}\'s Post';
+    _titleController.text = '${widget.post.authorName}\'s Post';
     _descriptionController.text = widget.post.content.length > 100 
         ? widget.post.content.substring(0, 100) + '...'
         : widget.post.content;
@@ -317,7 +317,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                           ),
                         ),
                         Text(
-                          widget.post.author.walletAddress.substring(0, 8) + '...',
+                          'Wallet: ${widget.post.authorId.substring(0, 8)}...',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -369,7 +369,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                   const SizedBox(width: 8),
                   _buildStatChip('💬', widget.post.commentsCount.toString()),
                   const SizedBox(width: 8),
-                  _buildStatChip('💸', '\$${widget.post.tipsAmount.toStringAsFixed(0)}'),
+                  _buildStatChip('💸', '${widget.post.tipsCount} tips'),
                 ],
               ),
             ],
