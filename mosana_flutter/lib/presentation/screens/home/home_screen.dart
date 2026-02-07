@@ -47,14 +47,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onBottomNavTap(int index) {
+    // Skip the middle button (FAB)
+    if (index == 2) return;
+    
     setState(() => _selectedIndex = index);
+    
+    // Navigate to different screens based on index
+    switch (index) {
+      case 0: // Home - already here
+        break;
+      case 1: // Explore
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchExploreScreen()),
+        );
+        break;
+      case 3: // DAO - Create a placeholder for now
+        _showComingSoon('DAO');
+        break;
+      case 4: // Wallet
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const WalletSettingsScreen()),
+        );
+        break;
+    }
+  }
+  
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature feature coming soon!'),
+        backgroundColor: AppColors.mosanaPurple,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      drawer: _buildNavigationDrawer(context),
       body: Stack(
         children: [
           // Background gradient
@@ -96,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // Floating Action Button
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // TODO: Create post
+          _showComingSoon('Create Post');
         },
         backgroundColor: AppColors.mosanaPurple,
         child: const Icon(Icons.add, color: Colors.white),
@@ -123,15 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Row(
         children: [
-          // Menu button
-          IconButton(
-            icon: const Icon(Icons.menu),
-            color: Colors.white,
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          ),
-          const SizedBox(width: 8),
           // Logo
           Image.asset(
             'assets/images/mosana-logo.png',
