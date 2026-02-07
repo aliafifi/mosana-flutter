@@ -10,8 +10,10 @@ import '../../data/repositories/post_repository.dart';
 /// Storage service provider (singleton)
 final storageServiceProvider = Provider<StorageService>((ref) {
   final storage = StorageService();
-  // Initialize on first access
-  storage.init();
+  // Initialize asynchronously
+  storage.init().catchError((e) {
+    AppLogger.error('Failed to initialize storage: $e');
+  });
   return storage;
 });
 
