@@ -6,6 +6,7 @@ import '../../../core/config/colors.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/auth_provider.dart';
 
 /// Screen for creating a new post
 class CreatePostScreen extends ConsumerStatefulWidget {

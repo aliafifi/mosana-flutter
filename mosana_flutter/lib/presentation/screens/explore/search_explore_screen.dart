@@ -324,15 +324,39 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
   }
   
   Widget _buildTopUsersTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: MockData.users.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildUserCard(MockData.users[index]),
-        );
-      },
+    // TODO: Replace with real API data
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.people_outline,
+              size: 64,
+              color: AppColors.textSecondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Top Users Coming Soon',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Discover popular users and creators',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
   

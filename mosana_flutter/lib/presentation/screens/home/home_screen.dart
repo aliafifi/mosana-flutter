@@ -72,20 +72,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
 
-          // Content
-          SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                // Header
-                _buildHeader(),
+          // Content - No SafeArea needed here (MainNavigationScreen handles it)
+          Column(
+            children: [
+              // Header
+              _buildHeader(),
 
-                // Feed
-                Expanded(
-                  child: _buildFeed(feedState),
-                ),
-              ],
-            ),
+              // Feed
+              Expanded(
+                child: _buildFeed(feedState),
+              ),
+            ],
           ),
         ],
       ),
@@ -155,147 +152,142 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildFeed(FeedState state) {
-    return state.when(
-      initial: () => const Center(
+    // Handle different feed states with type checking
+    if (state is FeedStateInitial) {
+      return const Center(
         child: CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
         ),
-      ),
-      loading: (isRefresh) {
-        if (isRefresh) {
-          // Show refresh indicator
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+      );
+    } else if (state is FeedStateLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+        ),
+      );
+    } else if (state is FeedStateLoaded) {
+      if (state.posts.isEmpty) {
+        return _buildEmptyState();
+      }
+
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: AppColors.mosanaPurple,
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.only(top: 8, bottom: 100),
+          itemCount: state.posts.length + (state.hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            // Loading indicator at bottom
+            if (index >= state.posts.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+                  ),
+                ),
+              );
+            }
+
+            final post = state.posts[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: PostCard(
+                post: post,
+                onLike: () => _handleLike(post),
+                onComment: () => _handleComment(post),
+                onTip: () => _handleTip(post),
+                onShare: () => _handleShare(post),
+                onMint: () => _handleMint(post),
+                onTap: () => _handlePostTap(post),
+              ),
+            );
+          },
+        ),
+      );
+    } else if (state is FeedStateLoadingMore) {
+      return RefreshIndicator(
+        onRefresh: _handleRefresh,
+        color: AppColors.mosanaPurple,
+        child: ListView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.only(top: 8, bottom: 100),
+          itemCount: state.posts.length + 1,
+          itemBuilder: (context, index) {
+            if (index >= state.posts.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+                  ),
+                ),
+              );
+            }
+
+            final post = state.posts[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: PostCard(
+                post: post,
+                onLike: () => _handleLike(post),
+                onComment: () => _handleComment(post),
+                onTip: () => _handleTip(post),
+                onShare: () => _handleShare(post),
+                onMint: () => _handleMint(post),
+                onTap: () => _handlePostTap(post),
+              ),
+            );
+          },
+        ),
+      );
+    } else if (state is FeedStateError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: AppColors.red,
             ),
-          );
-        }
-        // Initial loading
-        return const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
-          ),
-        );
-      },
-      loaded: (posts, hasMore) {
-        if (posts.isEmpty) {
-          return _buildEmptyState();
-        }
-
-        return RefreshIndicator(
-          onRefresh: _handleRefresh,
-          color: AppColors.mosanaPurple,
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(top: 8, bottom: 100),
-            itemCount: posts.length + (hasMore ? 1 : 0),
-            itemBuilder: (context, index) {
-              // Loading indicator at bottom
-              if (index >= posts.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
-                    ),
-                  ),
-                );
-              }
-
-              final post = posts[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: PostCard(
-                  post: post,
-                  onLike: () => _handleLike(post),
-                  onComment: () => _handleComment(post),
-                  onTip: () => _handleTip(post),
-                  onShare: () => _handleShare(post),
-                  onMint: () => _handleMint(post),
-                  onTap: () => _handlePostTap(post),
-                ),
-              );
-            },
-          ),
-        );
-      },
-      loadingMore: (posts) {
-        return RefreshIndicator(
-          onRefresh: _handleRefresh,
-          color: AppColors.mosanaPurple,
-          child: ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.only(top: 8, bottom: 100),
-            itemCount: posts.length + 1,
-            itemBuilder: (context, index) {
-              if (index >= posts.length) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
-                    ),
-                  ),
-                );
-              }
-
-              final post = posts[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: PostCard(
-                  post: post,
-                  onLike: () => _handleLike(post),
-                  onComment: () => _handleComment(post),
-                  onTip: () => _handleTip(post),
-                  onShare: () => _handleShare(post),
-                  onMint: () => _handleMint(post),
-                  onTap: () => _handlePostTap(post),
-                ),
-              );
-            },
-          ),
-        );
-      },
-      error: (message) {
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.red,
+            const SizedBox(height: 16),
+            const Text(
+              'Failed to load feed',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load feed',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.message,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
               ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => ref.read(feedProvider.notifier).refresh(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.mosanaPurple,
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => ref.read(feedProvider.notifier).refresh(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.mosanaPurple,
-                ),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        );
-      },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // Fallback (should never reach here)
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+      ),
     );
   }
 

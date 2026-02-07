@@ -56,17 +56,24 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      extendBody: false,
+      extendBody: false, // Don't extend body behind nav bar
+      extendBodyBehindAppBar: false,
       resizeToAvoidBottomInset: false, // Prevent keyboard from pushing up nav
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
+      body: SafeArea(
+        bottom: false, // Don't apply SafeArea to bottom (nav bar handles it)
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _screens,
+        ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: SafeArea(
+        child: _buildBottomNav(),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreatePost,
         backgroundColor: AppColors.mosanaPurple,
-        child: const Icon(Icons.add, color: Colors.white),
+        elevation: 4,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
@@ -82,6 +89,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             width: 1,
           ),
         ),
+        // Add shadow for better visibility
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
       child: BottomNavigationBar(
         currentIndex: _selectedIndex,

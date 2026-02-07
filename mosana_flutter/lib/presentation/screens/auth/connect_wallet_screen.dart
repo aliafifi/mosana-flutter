@@ -106,7 +106,7 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
 
       if (!mounted) return;
 
-      if (result.isSuccess) {
+      if (result.success) {
         // Success! Navigate to main screen
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

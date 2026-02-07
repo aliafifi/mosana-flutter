@@ -13,7 +13,7 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   final storage = StorageService();
   // Initialize asynchronously
   storage.init().catchError((e) {
-    AppLogger.logError('Failed to initialize storage: $e');
+    AppLogger.error('Failed to initialize storage: $e');
   });
   return storage;
 });
