@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/post_repository.dart';
-import 'app_providers.dart';
+import 'auth_provider.dart';
 
 // ===================== FEED STATE =====================
 

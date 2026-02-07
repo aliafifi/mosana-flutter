@@ -57,7 +57,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     // Listen to auth state
     final authState = ref.watch(authStateProvider);
-    final currentUser = authState is _AuthStateAuthenticated ? authState.username : null;
+    final currentUser = switch (authState) {
+      _AuthStateAuthenticated(username: final name) => name,
+      _ => null,
+    };
 
     return Scaffold(
       backgroundColor: AppColors.pureBlack,

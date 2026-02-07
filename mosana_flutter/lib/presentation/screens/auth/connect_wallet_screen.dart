@@ -81,16 +81,18 @@ class _ConnectWalletScreenState extends ConsumerState<ConnectWalletScreen> {
 
       // Check if authentication was successful
       final authState = ref.read(authStateProvider);
-      if (authState is _AuthStateAuthenticated) {
+      
+      if (authState case _AuthStateAuthenticated()) {
         // Navigate to home on success
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (_) => const HomeScreen(),
           ),
         );
-      } else if (authState is _AuthStateError) {
+      } else if (authState case _AuthStateError(message: final msg)) {
         setState(() {
-          _errorMessage = authState.message;
+          _errorMessage = msg;
           _connectingWallet = null;
         });
       }

@@ -18,7 +18,7 @@ final storageServiceProvider = Provider<StorageService>((ref) {
 /// Dio client provider (singleton)
 final dioClientProvider = Provider<DioClient>((ref) {
   final storage = ref.watch(storageServiceProvider);
-  return DioClient(storage: storage);
+  return DioClient(storage);
 });
 
 /// API service provider
