@@ -24,21 +24,25 @@ class MosanaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mosana',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
+      theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: AppColors.pureBlack,
         primaryColor: AppColors.mosanaPurple,
-        brightness: Brightness.dark,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(decoration: TextDecoration.none),
-          bodyMedium: TextStyle(decoration: TextDecoration.none),
-          bodySmall: TextStyle(decoration: TextDecoration.none),
+        textTheme: ThemeData.dark().textTheme.apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+          decorationColor: Colors.transparent,
+        ).copyWith(
+          bodyLarge: const TextStyle(decoration: TextDecoration.none, color: AppColors.textPrimary),
+          bodyMedium: const TextStyle(decoration: TextDecoration.none, color: AppColors.textPrimary),
+          bodySmall: const TextStyle(decoration: TextDecoration.none, color: AppColors.textSecondary),
+          labelLarge: const TextStyle(decoration: TextDecoration.none),
+          labelMedium: const TextStyle(decoration: TextDecoration.none),
+          labelSmall: const TextStyle(decoration: TextDecoration.none),
         ),
-        // Remove underlines from all text
-        textSelectionTheme: const TextSelectionThemeData(
-          selectionHandleColor: AppColors.mosanaPurple,
-        ),
+        // Remove default Material underlines
+        dividerColor: Colors.transparent,
       ),
-      home: const SplashScreen(), // Start with Splash Screen
+      home: const SplashScreen(),
     );
   }
 }

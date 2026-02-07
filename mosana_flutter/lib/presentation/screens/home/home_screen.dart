@@ -67,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         // Content
         SafeArea(
+          bottom: false, // Don't add padding at bottom (nav bar area)
           child: Column(
             children: [
               // Header

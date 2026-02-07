@@ -36,6 +36,7 @@ class WalletMainScreen extends StatelessWidget {
 
         // Content
         SafeArea(
+          bottom: false, // Don't add padding at bottom
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(

@@ -150,6 +150,7 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
         
         // Content
         SafeArea(
+          bottom: false, // Don't add padding at bottom
           child: Column(
             children: [
               // Search bar

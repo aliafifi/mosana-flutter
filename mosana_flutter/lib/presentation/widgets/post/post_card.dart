@@ -46,10 +46,11 @@ class PostCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               post['content'] as String,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 15,
                 color: AppColors.textPrimary,
                 height: 1.5,
+                decoration: TextDecoration.none,
               ),
             ),
           ),
@@ -85,10 +86,11 @@ class PostCard extends StatelessWidget {
                 children: (post['tags'] as List).map((tag) {
                   return Text(
                     '#$tag',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.mosanaBlue,
                       fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.none,
                     ),
                   );
                 }).toList(),
