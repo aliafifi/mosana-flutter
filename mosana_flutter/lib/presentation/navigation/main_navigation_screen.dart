@@ -67,52 +67,54 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   Widget _buildBottomNav() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.deepPurpleBlack,
-          border: Border(
-            top: BorderSide(
-              color: AppColors.textSecondary.withOpacity(0.1),
-            ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.deepPurpleBlack,
+        border: Border(
+          top: BorderSide(
+            color: AppColors.textSecondary.withOpacity(0.1),
+            width: 1,
           ),
         ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onBottomNavTap,
-          backgroundColor: Colors.transparent,
-          selectedItemColor: AppColors.mosanaPurple,
-          unselectedItemColor: AppColors.textSecondary,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.explore_outlined),
-              activeIcon: Icon(Icons.explore),
-              label: 'Explore',
-            ),
-            BottomNavigationBarItem(
-              icon: SizedBox(width: 24), // Spacer for FAB
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_outlined),
-              activeIcon: Icon(Icons.account_balance),
-              label: 'DAO',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.account_balance_wallet_outlined),
-              activeIcon: Icon(Icons.account_balance_wallet),
-              label: 'Wallet',
-            ),
-          ],
-        ),
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onBottomNavTap,
+        backgroundColor: Colors.transparent,
+        selectedItemColor: AppColors.mosanaPurple,
+        unselectedItemColor: AppColors.textSecondary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 0,
+        showSelectedLabels: true,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 11,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore_outlined),
+            activeIcon: Icon(Icons.explore),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: SizedBox(width: 24, height: 24), // Spacer for FAB
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_outlined),
+            activeIcon: Icon(Icons.account_balance),
+            label: 'DAO',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: Icon(Icons.account_balance_wallet),
+            label: 'Wallet',
+          ),
+        ],
       ),
     );
   }
