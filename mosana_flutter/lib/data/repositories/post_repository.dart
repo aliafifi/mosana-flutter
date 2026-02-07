@@ -1,0 +1,469 @@
+import '../../core/services/api_service.dart';
+import '../../core/utils/logger.dart';
+
+/// Repository for post-related operations
+class PostRepository {
+  final ApiService _api;
+  final _logger = AppLogger();
+
+  PostRepository({required ApiService api}) : _api = api;
+
+  // ===================== FEED =====================
+
+  /// Get feed posts with pagination
+  Future<FeedResult> getFeed({
+    int page = 1,
+    int limit = 20,
+    String? cursor,
+  }) async {
+    try {
+      final response = await _api.getFeed(
+        page: page,
+        limit: limit,
+        cursor: cursor,
+      );
+
+      if (response.success && response.data != null) {
+        final hasMore = response.meta?['hasMore'] as bool? ?? false;
+        final nextCursor = response.meta?['nextCursor'] as String?;
+        
+        return FeedResult.success(
+          posts: response.data!,
+          hasMore: hasMore,
+          nextCursor: nextCursor,
+        );
+      }
+
+      return FeedResult.error(response.error ?? 'Failed to load feed');
+    } catch (e) {
+      _logger.error('PostRepository.getFeed error: $e');
+      return FeedResult.error('Failed to load feed: $e');
+    }
+  }
+
+  /// Get single post
+  Future<PostResult> getPost(String postId) async {
+    try {
+      final response = await _api.getPost(postId);
+
+      if (response.success && response.data != null) {
+        return PostResult.success(response.data!);
+      }
+
+      return PostResult.error(response.error ?? 'Post not found');
+    } catch (e) {
+      _logger.error('PostRepository.getPost error: $e');
+      return PostResult.error('Failed to load post: $e');
+    }
+  }
+
+  // ===================== CREATE =====================
+
+  /// Create new post
+  Future<PostResult> createPost({
+    required String content,
+    List<String>? imageUrls,
+    List<String>? tags,
+  }) async {
+    try {
+      final response = await _api.createPost(
+        content: content,
+        imageUrls: imageUrls,
+        tags: tags,
+      );
+
+      if (response.success && response.data != null) {
+        _logger.success('Post created successfully');
+        return PostResult.success(response.data!);
+      }
+
+      return PostResult.error(response.error ?? 'Failed to create post');
+    } catch (e) {
+      _logger.error('PostRepository.createPost error: $e');
+      return PostResult.error('Failed to create post: $e');
+    }
+  }
+
+  // ===================== INTERACTIONS =====================
+
+  /// Like a post
+  Future<ActionResult> likePost(String postId) async {
+    try {
+      final response = await _api.likePost(postId);
+
+      if (response.success) {
+        return ActionResult.success();
+      }
+
+      return ActionResult.error(response.error ?? 'Failed to like post');
+    } catch (e) {
+      _logger.error('PostRepository.likePost error: $e');
+      return ActionResult.error('Failed to like post: $e');
+    }
+  }
+
+  /// Unlike a post
+  Future<ActionResult> unlikePost(String postId) async {
+    try {
+      final response = await _api.unlikePost(postId);
+
+      if (response.success) {
+        return ActionResult.success();
+      }
+
+      return ActionResult.error(response.error ?? 'Failed to unlike post');
+    } catch (e) {
+      _logger.error('PostRepository.unlikePost error: $e');
+      return ActionResult.error('Failed to unlike post: $e');
+    }
+  }
+
+  /// Toggle like (smart like/unlike)
+  Future<ActionResult> toggleLike(String postId, bool currentlyLiked) async {
+    if (currentlyLiked) {
+      return await unlikePost(postId);
+    } else {
+      return await likePost(postId);
+    }
+  }
+
+  // ===================== COMMENTS =====================
+
+  /// Get comments for a post
+  Future<CommentsResult> getComments(
+    String postId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _api.getComments(
+        postId,
+        page: page,
+        limit: limit,
+      );
+
+      if (response.success && response.data != null) {
+        return CommentsResult.success(response.data!);
+      }
+
+      return CommentsResult.error(
+        response.error ?? 'Failed to load comments',
+      );
+    } catch (e) {
+      _logger.error('PostRepository.getComments error: $e');
+      return CommentsResult.error('Failed to load comments: $e');
+    }
+  }
+
+  /// Add comment to post
+  Future<CommentResult> addComment({
+    required String postId,
+    required String content,
+  }) async {
+    try {
+      final response = await _api.addComment(
+        postId: postId,
+        content: content,
+      );
+
+      if (response.success && response.data != null) {
+        _logger.success('Comment added successfully');
+        return CommentResult.success(response.data!);
+      }
+
+      return CommentResult.error(response.error ?? 'Failed to add comment');
+    } catch (e) {
+      _logger.error('PostRepository.addComment error: $e');
+      return CommentResult.error('Failed to add comment: $e');
+    }
+  }
+
+  // ===================== TIPS =====================
+
+  /// Send tip to post author
+  Future<TipResult> sendTip({
+    required String postId,
+    required double amount,
+    String? message,
+  }) async {
+    try {
+      _logger.info('Sending tip: \$$amount to post $postId');
+
+      final response = await _api.sendTip(
+        postId: postId,
+        amount: amount,
+        message: message,
+      );
+
+      if (response.success && response.data != null) {
+        _logger.success('Tip sent successfully');
+        return TipResult.success(
+          transactionHash: response.data!['transactionHash'] as String,
+          amount: amount,
+          data: response.data!,
+        );
+      }
+
+      return TipResult.error(response.error ?? 'Failed to send tip');
+    } catch (e) {
+      _logger.error('PostRepository.sendTip error: $e');
+      return TipResult.error('Failed to send tip: $e');
+    }
+  }
+
+  /// Get tip history
+  Future<TipHistoryResult> getTipHistory({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _api.getTipHistory(
+        page: page,
+        limit: limit,
+      );
+
+      if (response.success && response.data != null) {
+        return TipHistoryResult.success(response.data!);
+      }
+
+      return TipHistoryResult.error(
+        response.error ?? 'Failed to load tip history',
+      );
+    } catch (e) {
+      _logger.error('PostRepository.getTipHistory error: $e');
+      return TipHistoryResult.error('Failed to load tip history: $e');
+    }
+  }
+
+  // ===================== MINT =====================
+
+  /// Mint post as NFT
+  Future<MintResult> mintPost(String postId) async {
+    try {
+      _logger.info('Minting post as NFT: $postId');
+
+      final response = await _api.mintPost(postId);
+
+      if (response.success && response.data != null) {
+        _logger.success('Post minted successfully');
+        return MintResult.success(
+          mintAddress: response.data!['mintAddress'] as String,
+          transactionHash: response.data!['transactionHash'] as String,
+          data: response.data!,
+        );
+      }
+
+      return MintResult.error(response.error ?? 'Failed to mint post');
+    } catch (e) {
+      _logger.error('PostRepository.mintPost error: $e');
+      return MintResult.error('Failed to mint post: $e');
+    }
+  }
+}
+
+// ===================== RESULT CLASSES =====================
+
+/// Feed result
+class FeedResult {
+  final bool success;
+  final List<Map<String, dynamic>>? posts;
+  final bool hasMore;
+  final String? nextCursor;
+  final String? error;
+
+  FeedResult._({
+    required this.success,
+    this.posts,
+    this.hasMore = false,
+    this.nextCursor,
+    this.error,
+  });
+
+  factory FeedResult.success({
+    required List<Map<String, dynamic>> posts,
+    bool hasMore = false,
+    String? nextCursor,
+  }) {
+    return FeedResult._(
+      success: true,
+      posts: posts,
+      hasMore: hasMore,
+      nextCursor: nextCursor,
+    );
+  }
+
+  factory FeedResult.error(String error) {
+    return FeedResult._(success: false, error: error);
+  }
+}
+
+/// Single post result
+class PostResult {
+  final bool success;
+  final Map<String, dynamic>? post;
+  final String? error;
+
+  PostResult._({
+    required this.success,
+    this.post,
+    this.error,
+  });
+
+  factory PostResult.success(Map<String, dynamic> post) {
+    return PostResult._(success: true, post: post);
+  }
+
+  factory PostResult.error(String error) {
+    return PostResult._(success: false, error: error);
+  }
+}
+
+/// Generic action result
+class ActionResult {
+  final bool success;
+  final String? error;
+
+  ActionResult._({
+    required this.success,
+    this.error,
+  });
+
+  factory ActionResult.success() {
+    return ActionResult._(success: true);
+  }
+
+  factory ActionResult.error(String error) {
+    return ActionResult._(success: false, error: error);
+  }
+}
+
+/// Comments list result
+class CommentsResult {
+  final bool success;
+  final List<Map<String, dynamic>>? comments;
+  final String? error;
+
+  CommentsResult._({
+    required this.success,
+    this.comments,
+    this.error,
+  });
+
+  factory CommentsResult.success(List<Map<String, dynamic>> comments) {
+    return CommentsResult._(success: true, comments: comments);
+  }
+
+  factory CommentsResult.error(String error) {
+    return CommentsResult._(success: false, error: error);
+  }
+}
+
+/// Single comment result
+class CommentResult {
+  final bool success;
+  final Map<String, dynamic>? comment;
+  final String? error;
+
+  CommentResult._({
+    required this.success,
+    this.comment,
+    this.error,
+  });
+
+  factory CommentResult.success(Map<String, dynamic> comment) {
+    return CommentResult._(success: true, comment: comment);
+  }
+
+  factory CommentResult.error(String error) {
+    return CommentResult._(success: false, error: error);
+  }
+}
+
+/// Tip result
+class TipResult {
+  final bool success;
+  final String? transactionHash;
+  final double? amount;
+  final Map<String, dynamic>? data;
+  final String? error;
+
+  TipResult._({
+    required this.success,
+    this.transactionHash,
+    this.amount,
+    this.data,
+    this.error,
+  });
+
+  factory TipResult.success({
+    required String transactionHash,
+    required double amount,
+    Map<String, dynamic>? data,
+  }) {
+    return TipResult._(
+      success: true,
+      transactionHash: transactionHash,
+      amount: amount,
+      data: data,
+    );
+  }
+
+  factory TipResult.error(String error) {
+    return TipResult._(success: false, error: error);
+  }
+}
+
+/// Tip history result
+class TipHistoryResult {
+  final bool success;
+  final List<Map<String, dynamic>>? tips;
+  final String? error;
+
+  TipHistoryResult._({
+    required this.success,
+    this.tips,
+    this.error,
+  });
+
+  factory TipHistoryResult.success(List<Map<String, dynamic>> tips) {
+    return TipHistoryResult._(success: true, tips: tips);
+  }
+
+  factory TipHistoryResult.error(String error) {
+    return TipHistoryResult._(success: false, error: error);
+  }
+}
+
+/// Mint result
+class MintResult {
+  final bool success;
+  final String? mintAddress;
+  final String? transactionHash;
+  final Map<String, dynamic>? data;
+  final String? error;
+
+  MintResult._({
+    required this.success,
+    this.mintAddress,
+    this.transactionHash,
+    this.data,
+    this.error,
+  });
+
+  factory MintResult.success({
+    required String mintAddress,
+    required String transactionHash,
+    Map<String, dynamic>? data,
+  }) {
+    return MintResult._(
+      success: true,
+      mintAddress: mintAddress,
+      transactionHash: transactionHash,
+      data: data,
+    );
+  }
+
+  factory MintResult.error(String error) {
+    return MintResult._(success: false, error: error);
+  }
+}

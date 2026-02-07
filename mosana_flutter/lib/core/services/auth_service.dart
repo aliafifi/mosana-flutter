@@ -1,0 +1,330 @@
+import 'package:dio/dio.dart';
+import '../network/dio_client.dart';
+import '../utils/logger.dart';
+import 'storage_service.dart';
+
+/// Authentication service for wallet connection and JWT management
+class AuthService {
+  final DioClient _dioClient;
+  final StorageService _storage;
+  final _logger = AppLogger();
+
+  AuthService({
+    required DioClient dioClient,
+    required StorageService storage,
+  })  : _dioClient = dioClient,
+        _storage = storage;
+
+  // ===================== Authentication State =====================
+
+  /// Check if user is authenticated
+  Future<bool> isAuthenticated() async {
+    final token = await _storage.getToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  /// Get current wallet address
+  String? getCurrentWallet() {
+    return _storage.getWalletAddress();
+  }
+
+  /// Get current username
+  String? getCurrentUsername() {
+    return _storage.getUsername();
+  }
+
+  // ===================== Wallet Connection =====================
+
+  /// Connect wallet and authenticate with backend
+  /// 
+  /// Steps:
+  /// 1. User connects wallet (Phantom/Solflare)
+  /// 2. Get signature from wallet
+  /// 3. Send to backend for verification
+  /// 4. Receive JWT token
+  /// 5. Store credentials securely
+  Future<AuthResult> connectWallet({
+    required String walletAddress,
+    required String signature,
+    String? publicKey,
+  }) async {
+    try {
+      _logger.info('Connecting wallet: $walletAddress');
+
+      // Call backend authentication endpoint
+      final response = await _dioClient.post(
+        '/api/auth/connect',
+        data: {
+          'walletAddress': walletAddress,
+          'signature': signature,
+          'publicKey': publicKey,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        
+        // Extract auth data
+        final token = data['token'] as String;
+        final user = data['user'] as Map<String, dynamic>;
+        final username = user['username'] as String;
+        final isNewUser = data['isNewUser'] as bool? ?? false;
+
+        // Store credentials
+        await _storage.saveToken(token);
+        await _storage.saveWalletAddress(walletAddress);
+        await _storage.saveUsername(username);
+        await _storage.setLoggedIn(true);
+
+        _logger.success('Wallet connected successfully: @$username');
+
+        return AuthResult.success(
+          token: token,
+          walletAddress: walletAddress,
+          username: username,
+          isNewUser: isNewUser,
+          user: user,
+        );
+      } else {
+        final error = response.data['error'] as String? ?? 'Authentication failed';
+        _logger.error('Wallet connection failed: $error');
+        return AuthResult.error(error);
+      }
+    } on DioException catch (e) {
+      final error = _handleDioError(e);
+      _logger.error('Wallet connection error: $error');
+      return AuthResult.error(error);
+    } catch (e) {
+      _logger.error('Unexpected error during wallet connection: $e');
+      return AuthResult.error('Failed to connect wallet: $e');
+    }
+  }
+
+  // ===================== Mock Wallet Connection (For Development) =====================
+
+  /// Mock wallet connection for testing without actual wallet
+  /// TODO: Remove in production
+  Future<AuthResult> connectMockWallet(String username) async {
+    try {
+      _logger.warning('Using MOCK wallet connection (development only)');
+
+      // Generate mock data
+      final mockWallet = 'MOCK${DateTime.now().millisecondsSinceEpoch}';
+      final mockToken = 'mock_jwt_${DateTime.now().millisecondsSinceEpoch}';
+
+      // Store credentials
+      await _storage.saveToken(mockToken);
+      await _storage.saveWalletAddress(mockWallet);
+      await _storage.saveUsername(username);
+      await _storage.setLoggedIn(true);
+
+      return AuthResult.success(
+        token: mockToken,
+        walletAddress: mockWallet,
+        username: username,
+        isNewUser: true,
+        user: {
+          'id': 'mock_user_id',
+          'username': username,
+          'walletAddress': mockWallet,
+          'profileImage': null,
+          'verified': false,
+        },
+      );
+    } catch (e) {
+      _logger.error('Mock wallet connection failed: $e');
+      return AuthResult.error('Mock connection failed: $e');
+    }
+  }
+
+  // ===================== Session Management =====================
+
+  /// Refresh JWT token
+  Future<bool> refreshToken() async {
+    try {
+      final currentToken = await _storage.getToken();
+      if (currentToken == null) return false;
+
+      final response = await _dioClient.post(
+        '/api/auth/refresh',
+        data: {'token': currentToken},
+      );
+
+      if (response.statusCode == 200) {
+        final newToken = response.data['data']['token'] as String;
+        await _storage.saveToken(newToken);
+        _logger.success('Token refreshed successfully');
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      _logger.error('Token refresh failed: $e');
+      return false;
+    }
+  }
+
+  /// Verify current token is valid
+  Future<bool> verifyToken() async {
+    try {
+      final response = await _dioClient.get('/api/auth/verify');
+      return response.statusCode == 200;
+    } catch (e) {
+      _logger.warning('Token verification failed: $e');
+      return false;
+    }
+  }
+
+  /// Auto-login on app start
+  Future<AuthResult?> autoLogin() async {
+    try {
+      if (!await isAuthenticated()) {
+        _logger.info('No stored credentials, skipping auto-login');
+        return null;
+      }
+
+      _logger.info('Attempting auto-login...');
+
+      // Verify token is still valid
+      final isValid = await verifyToken();
+      
+      if (isValid) {
+        final wallet = getCurrentWallet();
+        final username = getCurrentUsername();
+        
+        _logger.success('Auto-login successful: @$username');
+        
+        return AuthResult.success(
+          token: await _storage.getToken() ?? '',
+          walletAddress: wallet ?? '',
+          username: username ?? '',
+          isNewUser: false,
+          user: {},
+        );
+      } else {
+        // Token expired, try to refresh
+        _logger.warning('Token expired, attempting refresh...');
+        final refreshed = await refreshToken();
+        
+        if (refreshed) {
+          return await autoLogin(); // Retry after refresh
+        } else {
+          _logger.error('Token refresh failed, logging out');
+          await logout();
+          return null;
+        }
+      }
+    } catch (e) {
+      _logger.error('Auto-login failed: $e');
+      await logout(); // Clear invalid credentials
+      return null;
+    }
+  }
+
+  // ===================== Logout =====================
+
+  /// Logout user and clear all auth data
+  Future<void> logout() async {
+    try {
+      _logger.info('Logging out user');
+      
+      // Notify backend (optional, fire and forget)
+      try {
+        await _dioClient.post('/api/auth/logout');
+      } catch (e) {
+        _logger.warning('Backend logout notification failed: $e');
+      }
+
+      // Clear local storage
+      await _storage.clearAuthData();
+      
+      _logger.success('Logout successful');
+    } catch (e) {
+      _logger.error('Logout error: $e');
+      // Force clear even on error
+      await _storage.clearAuthData();
+    }
+  }
+
+  // ===================== Error Handling =====================
+
+  String _handleDioError(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Connection timeout. Please check your internet.';
+      
+      case DioExceptionType.badResponse:
+        final statusCode = e.response?.statusCode;
+        final message = e.response?.data?['error'] as String?;
+        
+        if (statusCode == 401) {
+          return 'Authentication failed. Invalid signature.';
+        } else if (statusCode == 403) {
+          return 'Access denied. Wallet not authorized.';
+        } else if (statusCode == 429) {
+          return 'Too many attempts. Please try again later.';
+        }
+        
+        return message ?? 'Server error. Please try again.';
+      
+      case DioExceptionType.cancel:
+        return 'Request cancelled';
+      
+      case DioExceptionType.connectionError:
+        return 'No internet connection';
+      
+      default:
+        return 'Failed to connect. Please try again.';
+    }
+  }
+}
+
+// ===================== Result Classes =====================
+
+/// Authentication result wrapper
+class AuthResult {
+  final bool success;
+  final String? error;
+  final String? token;
+  final String? walletAddress;
+  final String? username;
+  final bool isNewUser;
+  final Map<String, dynamic>? user;
+
+  AuthResult._({
+    required this.success,
+    this.error,
+    this.token,
+    this.walletAddress,
+    this.username,
+    this.isNewUser = false,
+    this.user,
+  });
+
+  factory AuthResult.success({
+    required String token,
+    required String walletAddress,
+    required String username,
+    required bool isNewUser,
+    Map<String, dynamic>? user,
+  }) {
+    return AuthResult._(
+      success: true,
+      token: token,
+      walletAddress: walletAddress,
+      username: username,
+      isNewUser: isNewUser,
+      user: user,
+    );
+  }
+
+  factory AuthResult.error(String error) {
+    return AuthResult._(
+      success: false,
+      error: error,
+    );
+  }
+}

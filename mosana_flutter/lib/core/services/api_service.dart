@@ -1,0 +1,500 @@
+import 'package:dio/dio.dart';
+import '../network/dio_client.dart';
+import '../utils/logger.dart';
+
+/// API service for all backend operations
+class ApiService {
+  final DioClient _client;
+  final _logger = AppLogger();
+
+  ApiService({required DioClient client}) : _client = client;
+
+  // ===================== POSTS =====================
+
+  /// Get feed posts with pagination
+  Future<ApiResponse<List<Map<String, dynamic>>>> getFeed({
+    int page = 1,
+    int limit = 20,
+    String? cursor,
+  }) async {
+    try {
+      _logger.info('Fetching feed: page=$page, limit=$limit');
+
+      final response = await _client.get(
+        '/api/posts/feed',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          if (cursor != null) 'cursor': cursor,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        final posts = (data['posts'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList();
+        
+        _logger.success('Fetched ${posts.length} posts');
+        
+        return ApiResponse.success(
+          data: posts,
+          meta: {
+            'hasMore': data['hasMore'] as bool? ?? false,
+            'nextCursor': data['nextCursor'],
+            'total': data['total'],
+          },
+        );
+      }
+
+      return ApiResponse.error('Failed to fetch feed');
+    } catch (e) {
+      _logger.error('Feed fetch error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Get single post by ID
+  Future<ApiResponse<Map<String, dynamic>>> getPost(String postId) async {
+    try {
+      final response = await _client.get('/api/posts/$postId');
+      
+      if (response.statusCode == 200) {
+        final post = response.data['data'] as Map<String, dynamic>;
+        return ApiResponse.success(data: post);
+      }
+
+      return ApiResponse.error('Post not found');
+    } catch (e) {
+      _logger.error('Get post error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Create new post
+  Future<ApiResponse<Map<String, dynamic>>> createPost({
+    required String content,
+    List<String>? imageUrls,
+    List<String>? tags,
+  }) async {
+    try {
+      _logger.info('Creating post...');
+
+      final response = await _client.post(
+        '/api/posts',
+        data: {
+          'content': content,
+          if (imageUrls != null) 'imageUrls': imageUrls,
+          if (tags != null) 'tags': tags,
+        },
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final post = response.data['data'] as Map<String, dynamic>;
+        _logger.success('Post created: ${post['id']}');
+        return ApiResponse.success(data: post);
+      }
+
+      return ApiResponse.error('Failed to create post');
+    } catch (e) {
+      _logger.error('Create post error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Like a post
+  Future<ApiResponse<bool>> likePost(String postId) async {
+    try {
+      final response = await _client.post('/api/posts/$postId/like');
+      
+      if (response.statusCode == 200) {
+        _logger.success('Post liked: $postId');
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to like post');
+    } catch (e) {
+      _logger.error('Like post error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Unlike a post
+  Future<ApiResponse<bool>> unlikePost(String postId) async {
+    try {
+      final response = await _client.delete('/api/posts/$postId/like');
+      
+      if (response.statusCode == 200) {
+        _logger.success('Post unliked: $postId');
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to unlike post');
+    } catch (e) {
+      _logger.error('Unlike post error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Mint post as NFT
+  Future<ApiResponse<Map<String, dynamic>>> mintPost(String postId) async {
+    try {
+      _logger.info('Minting post as NFT: $postId');
+
+      final response = await _client.post('/api/posts/$postId/mint');
+      
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        _logger.success('Post minted: ${data['mintAddress']}');
+        return ApiResponse.success(data: data);
+      }
+
+      return ApiResponse.error('Failed to mint post');
+    } catch (e) {
+      _logger.error('Mint post error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  // ===================== COMMENTS =====================
+
+  /// Get comments for a post
+  Future<ApiResponse<List<Map<String, dynamic>>>> getComments(
+    String postId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/api/posts/$postId/comments',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        final comments = (data['comments'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList();
+        
+        return ApiResponse.success(data: comments);
+      }
+
+      return ApiResponse.error('Failed to fetch comments');
+    } catch (e) {
+      _logger.error('Get comments error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Add comment to post
+  Future<ApiResponse<Map<String, dynamic>>> addComment({
+    required String postId,
+    required String content,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/api/posts/$postId/comments',
+        data: {'content': content},
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final comment = response.data['data'] as Map<String, dynamic>;
+        _logger.success('Comment added: ${comment['id']}');
+        return ApiResponse.success(data: comment);
+      }
+
+      return ApiResponse.error('Failed to add comment');
+    } catch (e) {
+      _logger.error('Add comment error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  // ===================== TIPS =====================
+
+  /// Send tip to post author
+  Future<ApiResponse<Map<String, dynamic>>> sendTip({
+    required String postId,
+    required double amount,
+    String? message,
+  }) async {
+    try {
+      _logger.info('Sending tip: \$$amount to post $postId');
+
+      final response = await _client.post(
+        '/api/tips/send',
+        data: {
+          'postId': postId,
+          'amount': amount,
+          if (message != null) 'message': message,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        _logger.success('Tip sent: ${data['transactionHash']}');
+        return ApiResponse.success(data: data);
+      }
+
+      return ApiResponse.error('Failed to send tip');
+    } catch (e) {
+      _logger.error('Send tip error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Get tip history
+  Future<ApiResponse<List<Map<String, dynamic>>>> getTipHistory({
+    int page = 1,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/api/tips/history',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        final tips = (data['tips'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList();
+        
+        return ApiResponse.success(data: tips);
+      }
+
+      return ApiResponse.error('Failed to fetch tip history');
+    } catch (e) {
+      _logger.error('Get tip history error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  // ===================== USERS =====================
+
+  /// Get user profile
+  Future<ApiResponse<Map<String, dynamic>>> getUserProfile(
+    String walletAddress,
+  ) async {
+    try {
+      final response = await _client.get('/api/users/$walletAddress');
+      
+      if (response.statusCode == 200) {
+        final user = response.data['data'] as Map<String, dynamic>;
+        return ApiResponse.success(data: user);
+      }
+
+      return ApiResponse.error('User not found');
+    } catch (e) {
+      _logger.error('Get user profile error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Update user profile
+  Future<ApiResponse<Map<String, dynamic>>> updateProfile({
+    String? username,
+    String? bio,
+    String? profileImage,
+  }) async {
+    try {
+      final response = await _client.put(
+        '/api/users/profile',
+        data: {
+          if (username != null) 'username': username,
+          if (bio != null) 'bio': bio,
+          if (profileImage != null) 'profileImage': profileImage,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final user = response.data['data'] as Map<String, dynamic>;
+        _logger.success('Profile updated');
+        return ApiResponse.success(data: user);
+      }
+
+      return ApiResponse.error('Failed to update profile');
+    } catch (e) {
+      _logger.error('Update profile error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Follow user
+  Future<ApiResponse<bool>> followUser(String userId) async {
+    try {
+      final response = await _client.post('/api/users/$userId/follow');
+      
+      if (response.statusCode == 200) {
+        _logger.success('User followed: $userId');
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to follow user');
+    } catch (e) {
+      _logger.error('Follow user error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Unfollow user
+  Future<ApiResponse<bool>> unfollowUser(String userId) async {
+    try {
+      final response = await _client.delete('/api/users/$userId/follow');
+      
+      if (response.statusCode == 200) {
+        _logger.success('User unfollowed: $userId');
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to unfollow user');
+    } catch (e) {
+      _logger.error('Unfollow user error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  // ===================== NOTIFICATIONS =====================
+
+  /// Get notifications
+  Future<ApiResponse<List<Map<String, dynamic>>>> getNotifications({
+    int page = 1,
+    int limit = 20,
+    bool? unreadOnly,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/api/notifications',
+        queryParameters: {
+          'page': page,
+          'limit': limit,
+          if (unreadOnly != null) 'unreadOnly': unreadOnly,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        final notifications = (data['notifications'] as List)
+            .map((e) => e as Map<String, dynamic>)
+            .toList();
+        
+        return ApiResponse.success(
+          data: notifications,
+          meta: {
+            'unreadCount': data['unreadCount'],
+            'total': data['total'],
+          },
+        );
+      }
+
+      return ApiResponse.error('Failed to fetch notifications');
+    } catch (e) {
+      _logger.error('Get notifications error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Mark notification as read
+  Future<ApiResponse<bool>> markNotificationRead(String notificationId) async {
+    try {
+      final response = await _client.put(
+        '/api/notifications/$notificationId/read',
+      );
+      
+      if (response.statusCode == 200) {
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to mark notification as read');
+    } catch (e) {
+      _logger.error('Mark notification read error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  /// Mark all notifications as read
+  Future<ApiResponse<bool>> markAllNotificationsRead() async {
+    try {
+      final response = await _client.put('/api/notifications/read-all');
+      
+      if (response.statusCode == 200) {
+        _logger.success('All notifications marked as read');
+        return ApiResponse.success(data: true);
+      }
+
+      return ApiResponse.error('Failed to mark all as read');
+    } catch (e) {
+      _logger.error('Mark all notifications read error: $e');
+      return ApiResponse.error(_getErrorMessage(e));
+    }
+  }
+
+  // ===================== ERROR HANDLING =====================
+
+  String _getErrorMessage(dynamic error) {
+    if (error is DioException) {
+      if (error.response?.data != null) {
+        final data = error.response!.data;
+        if (data is Map && data['error'] != null) {
+          return data['error'] as String;
+        }
+      }
+      
+      switch (error.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return 'Connection timeout';
+        case DioExceptionType.connectionError:
+          return 'No internet connection';
+        case DioExceptionType.badResponse:
+          return 'Server error';
+        default:
+          return 'Network error';
+      }
+    }
+    
+    return 'An error occurred';
+  }
+}
+
+// ===================== RESPONSE WRAPPER =====================
+
+/// Generic API response wrapper
+class ApiResponse<T> {
+  final bool success;
+  final T? data;
+  final String? error;
+  final Map<String, dynamic>? meta;
+
+  ApiResponse._({
+    required this.success,
+    this.data,
+    this.error,
+    this.meta,
+  });
+
+  factory ApiResponse.success({
+    required T data,
+    Map<String, dynamic>? meta,
+  }) {
+    return ApiResponse._(
+      success: true,
+      data: data,
+      meta: meta,
+    );
+  }
+
+  factory ApiResponse.error(String error) {
+    return ApiResponse._(
+      success: false,
+      error: error,
+    );
+  }
+}
