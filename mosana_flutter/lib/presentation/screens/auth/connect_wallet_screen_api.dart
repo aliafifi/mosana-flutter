@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/colors.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/glass_card.dart';
+import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 
-class ConnectWalletScreen extends StatefulWidget {
+class ConnectWalletScreen extends ConsumerStatefulWidget {
   const ConnectWalletScreen({super.key});
 
   @override
-  State<ConnectWalletScreen> createState() => _ConnectWalletScreenState();
+  ConsumerState<ConnectWalletScreen> createState() => _ConnectWalletScreenState();
 }
 
-class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
+class _ConnectWalletScreenState extends ConsumerState<ConnectWalletScreen> {
   String? _connectingWallet;
+  String? _errorMessage;
 
   final List<WalletOption> _wallets = [
     const WalletOption(
@@ -38,19 +41,68 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
   Future<void> _connectWallet(String walletName) async {
     setState(() {
       _connectingWallet = walletName;
+      _errorMessage = null;
     });
 
-    // Simulate connection
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted) return;
-    
-    // Navigate to home
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
-      ),
-    );
+    try {
+      // TODO: Implement real wallet connection (Phantom/Solflare deep linking)
+      // For now, show error that real wallet integration is coming
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'Real wallet integration coming soon!\nUse "Test Mode" button below for now.';
+        _connectingWallet = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Connection failed: $e';
+        _connectingWallet = null;
+      });
+    }
+  }
+
+  /// Mock wallet connection for testing (TODO: Remove in production)
+  Future<void> _connectMockWallet() async {
+    setState(() {
+      _connectingWallet = 'Mock';
+      _errorMessage = null;
+    });
+
+    try {
+      // Generate random username for testing
+      final username = 'user${DateTime.now().millisecondsSinceEpoch % 10000}';
+      
+      await ref.read(authStateProvider.notifier).connectMockWallet(username);
+
+      if (!mounted) return;
+
+      // Check if authentication was successful
+      final authState = ref.read(authStateProvider);
+      
+      if (authState case AuthStateAuthenticated()) {
+        // Navigate to home on success
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
+        );
+      } else if (authState case AuthStateError(message: final msg)) {
+        setState(() {
+          _errorMessage = msg;
+          _connectingWallet = null;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Mock connection failed: $e';
+        _connectingWallet = null;
+      });
+    }
   }
 
   @override
@@ -123,6 +175,86 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
                     (index) => Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: _buildWalletCard(_wallets[index]),
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Error message
+                  if (_errorMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.red.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.info_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // TEST MODE Button (for development)
+                  GradientButton(
+                    text: 'Continue in Test Mode',
+                    onPressed: _connectingWallet == null ? _connectMockWallet : null,
+                    isLoading: _connectingWallet == 'Mock',
+                    icon: Icons.science,
+                    style: GradientButtonStyle.gold,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Test mode note
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.gold.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.gold.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_outlined,
+                          color: AppColors.gold,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Test mode uses mock data. Real wallet integration coming soon!',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.gold,
+                              height: 1.3,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
 

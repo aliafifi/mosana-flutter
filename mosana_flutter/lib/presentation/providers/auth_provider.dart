@@ -3,6 +3,7 @@ import '../../core/network/dio_client.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/utils/logger.dart';
 import '../../data/repositories/post_repository.dart';
 
 // ===================== CORE SERVICES =====================
@@ -12,7 +13,7 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   final storage = StorageService();
   // Initialize asynchronously
   storage.init().catchError((e) {
-    AppLogger.error('Failed to initialize storage: $e');
+    AppLogger.logError('Failed to initialize storage: $e');
   });
   return storage;
 });
