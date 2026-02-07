@@ -3,6 +3,7 @@ import '../../core/config/colors.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/explore/search_explore_screen.dart';
 import '../screens/wallet/wallet_main_screen.dart';
+import '../screens/post/create_post_screen.dart';
 
 /// Main navigation container that holds all primary screens
 /// Uses indexed stack to preserve state across tab switches
@@ -37,13 +38,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _showCreatePost() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Create Post feature coming soon!'),
-        backgroundColor: AppColors.mosanaPurple,
-        duration: Duration(seconds: 2),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const CreatePostScreen(),
       ),
-    );
+    ).then((result) {
+      // If post was created successfully, refresh the feed
+      if (result == true) {
+        setState(() {
+          // Force rebuild to show new post
+        });
+      }
+    });
   }
 
   @override
