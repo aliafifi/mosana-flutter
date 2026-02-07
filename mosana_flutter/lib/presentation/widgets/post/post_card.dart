@@ -135,6 +135,7 @@ class PostCard extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
+                        decoration: TextDecoration.none,
                       ),
                     ),
                     if (author['verified'] as bool? ?? false) ...[
