@@ -52,12 +52,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       backgroundColor: AppColors.pureBlack,
       extendBody: false,
       resizeToAvoidBottomInset: false, // Prevent keyboard from pushing up nav
-      body: SafeArea(
-        bottom: false, // Don't add safe area padding at bottom
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: _screens,
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
       ),
       bottomNavigationBar: _buildBottomNav(),
       floatingActionButton: FloatingActionButton(

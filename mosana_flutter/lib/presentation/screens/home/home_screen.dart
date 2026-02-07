@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
       color: AppColors.mosanaPurple,
       child: ListView.builder(
         controller: _scrollController,
-        padding: const EdgeInsets.only(top: 8, bottom: 80), // Add bottom padding for nav bar
+        padding: const EdgeInsets.only(top: 8, bottom: 100), // Add bottom padding for nav bar + FAB
         itemCount: MockData.posts.length,
         itemBuilder: (context, index) {
           final post = MockData.posts[index];
