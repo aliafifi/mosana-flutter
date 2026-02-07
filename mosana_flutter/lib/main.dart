@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/config/colors.dart';
 import 'presentation/screens/splash/splash_screen.dart';
@@ -13,7 +14,11 @@ Future<void> main() async {
     print('Warning: .env file not found, using defaults');
   }
   
-  runApp(const MosanaApp());
+  runApp(
+    const ProviderScope(
+      child: MosanaApp(),
+    ),
+  );
 }
 
 class MosanaApp extends StatelessWidget {
