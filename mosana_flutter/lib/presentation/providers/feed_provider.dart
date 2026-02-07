@@ -52,7 +52,7 @@ class FeedNotifier extends StateNotifier<FeedState> {
   /// Load more posts (pagination)
   Future<void> loadMore() async {
     // Don't load if already loading or no more posts
-    if (state is _FeedStateLoading || !_hasMore()) {
+    if (state is FeedStateLoading || !_hasMore()) {
       return;
     }
 

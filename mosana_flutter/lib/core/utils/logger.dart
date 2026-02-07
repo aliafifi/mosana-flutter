@@ -38,6 +38,23 @@ class AppLogger {
     _logger.f(message, error: error, stackTrace: stackTrace);
   }
 
+  // ===================== INSTANCE METHODS =====================
+  
+  /// Instance info
+  void info(dynamic message) {
+    AppLogger.info(message);
+  }
+
+  /// Instance warning
+  void warning(dynamic message) {
+    AppLogger.warning(message);
+  }
+
+  /// Instance error
+  void error(dynamic message) {
+    AppLogger.error(message);
+  }
+
   /// Instance method - success (alias for info with emoji)
   void success(dynamic message) {
     AppLogger.info('✅ $message');
