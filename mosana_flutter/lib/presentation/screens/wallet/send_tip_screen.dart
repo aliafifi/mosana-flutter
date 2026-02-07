@@ -247,7 +247,8 @@ class _SendTipScreenState extends State<SendTipScreen> {
       child: Row(
         children: [
           UserAvatar(
-            imageUrl: widget.recipient.avatarUrl,
+            imageUrl: widget.recipient.profileImage,
+            username: widget.recipient.username ?? widget.recipient.walletAddress,
             isVerified: widget.recipient.isVerified,
             size: 56,
           ),
@@ -259,7 +260,7 @@ class _SendTipScreenState extends State<SendTipScreen> {
                 Row(
                   children: [
                     Text(
-                      widget.recipient.username,
+                      widget.recipient.username ?? widget.recipient.displayName,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,

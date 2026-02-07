@@ -19,11 +19,20 @@ class AppColors {
   
   // BORDERS
   static const Color borderColor = Color(0xFF2A2A3E);
+  static const Color borderDark = Color(0xFF2A2A3E); // Alias for borderColor
+  
+  // SURFACES
+  static const Color surfaceDark = Color(0xFF1A1A2E);
   
   // ACCENTS
   static const Color gold = Color(0xFFF59E0B);
   static const Color green = Color(0xFF10B981);
   static const Color red = Color(0xFFEF4444);
+  
+  // NFT COLORS
+  static const Color nftPink = Color(0xFFEC4899);
+  static const Color nftBlue = Color(0xFF3B82F6);
+  static const Color nftOrange = Color(0xFFF97316);
   
   // GRADIENTS
   static const LinearGradient primaryGradient = LinearGradient(

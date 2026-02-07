@@ -417,7 +417,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                         achievement['icon'] as String,
                         style: TextStyle(
                           fontSize: 24,
-                          opacity: isUnlocked ? 1.0 : 0.3,
+                          color: isUnlocked ? Colors.white : Colors.white.withOpacity(0.3),
                         ),
                       ),
                     ),

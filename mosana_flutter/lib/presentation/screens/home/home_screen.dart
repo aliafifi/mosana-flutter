@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/colors.dart';
 import '../../../data/mock_data.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/models/post_model.dart';
 import '../../widgets/common/user_avatar.dart';
 import '../../widgets/post/post_card.dart';
 import '../notifications/notifications_screen.dart';
@@ -403,10 +405,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const SendTipScreen(
-                            recipientUsername: '@mosana_user',
-                            recipientName: 'Mosana User',
-                            recipientWallet: '7xKXtg...',
+                          builder: (_) => SendTipScreen(
+                            recipient: UserModel(
+                              walletAddress: '7xKXtg2CW5UL2n8T9Fzs3hY1qP9vR8mK4jL6nB3cD5eF',
+                              username: '@mosana_user',
+                              profileImage: 'https://i.pravatar.cc/150?img=1',
+                              isVerified: true,
+                            ),
                           ),
                         ),
                       );
@@ -420,8 +425,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const MintNFTScreen(
-                            postId: 'demo_post',
+                          builder: (_) => MintNFTScreen(
+                            post: PostModel(
+                              id: 'demo_post_1',
+                              content: 'This is a demo post that can be minted as an NFT!',
+                              authorId: 'user_1',
+                              createdAt: DateTime.now(),
+                              likesCount: 42,
+                              commentsCount: 12,
+                              tipsCount: 5,
+                            ),
                           ),
                         ),
                       );

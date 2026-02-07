@@ -110,19 +110,21 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
     });
   }
   
-  List<UserModel> get _filteredUsers {
+  List<Map<String, dynamic>> get _filteredUsers {
     if (_searchQuery.isEmpty) return MockData.users;
     return MockData.users
-        .where((user) => user.username.toLowerCase().contains(_searchQuery))
+        .where((user) => (user['username'] as String? ?? '').toLowerCase().contains(_searchQuery))
         .toList();
   }
   
-  List<PostModel> get _filteredPosts {
+  List<Map<String, dynamic>> get _filteredPosts {
     if (_searchQuery.isEmpty) return MockData.posts;
     return MockData.posts
-        .where((post) =>
-            post.content.toLowerCase().contains(_searchQuery) ||
-            post.author.username.toLowerCase().contains(_searchQuery))
+        .where((post) {
+          final content = (post['content'] as String? ?? '').toLowerCase();
+          final username = (post['author']?['username'] as String? ?? '').toLowerCase();
+          return content.contains(_searchQuery) || username.contains(_searchQuery);
+        })
         .toList();
   }
   
@@ -427,13 +429,14 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
     );
   }
   
-  Widget _buildUserCard(UserModel user) {
+  Widget _buildUserCard(Map<String, dynamic> user) {
     return GlassCard(
       child: Row(
         children: [
           UserAvatar(
-            imageUrl: user.avatarUrl,
-            isVerified: user.isVerified,
+            imageUrl: user['avatar'],
+            username: user['username'] ?? 'User',
+            isVerified: user['verified'] ?? false,
             size: 56,
           ),
           const SizedBox(width: 16),
@@ -444,14 +447,14 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
                 Row(
                   children: [
                     Text(
-                      user.username,
+                      user['username'] ?? 'User',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
-                    if (user.isVerified) ...[
+                    if (user['verified'] == true) ...[
                       const SizedBox(width: 4),
                       Icon(
                         Icons.verified,
@@ -463,7 +466,7 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user.bio,
+                  user['bio'] ?? '',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -475,12 +478,12 @@ class _SearchExploreScreenState extends State<SearchExploreScreen> with SingleTi
                 Row(
                   children: [
                     _buildStatBadge(
-                      '${user.followersCount}',
+                      '${user['followersCount'] ?? 0}',
                       'followers',
                     ),
                     const SizedBox(width: 12),
                     _buildStatBadge(
-                      '${user.postsCount}',
+                      '${user['posts'] ?? 0}',
                       'posts',
                     ),
                   ],

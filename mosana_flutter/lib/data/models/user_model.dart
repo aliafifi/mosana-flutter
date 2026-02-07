@@ -1,10 +1,6 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'user_model.g.dart';
-
-@JsonSerializable()
+/// UserModel - Simplified version without json_serializable
+/// For mock data and basic functionality
 class UserModel {
-  @JsonKey(name: '_id')
   final String? id;
   final String walletAddress;
   final String? username;
@@ -22,6 +18,10 @@ class UserModel {
   final DateTime? lastLogin;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  
+  // Additional fields for UI
+  final bool isVerified;
+  final int postsCount;
 
   UserModel({
     this.id,
@@ -41,12 +41,74 @@ class UserModel {
     this.lastLogin,
     this.createdAt,
     this.updatedAt,
+    this.isVerified = false,
+    this.postsCount = 0,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  /// From JSON (manual parsing)
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['_id'] ?? json['id'],
+      walletAddress: json['walletAddress'] ?? '',
+      username: json['username'],
+      bio: json['bio'],
+      profileImage: json['profileImage'],
+      nftProfilePicture: json['nftProfilePicture'],
+      solDomain: json['solDomain'],
+      totalEarned: (json['totalEarned'] ?? 0).toDouble(),
+      followersCount: json['followersCount'] ?? 0,
+      followingCount: json['followingCount'] ?? 0,
+      following: (json['following'] as List<dynamic>?)?.cast<String>() ?? [],
+      charityPledgePercentage: json['charityPledgePercentage']?.toDouble(),
+      selectedCause: json['selectedCause'],
+      isActive: json['isActive'] ?? true,
+      lastLogin: json['lastLogin'] != null ? DateTime.parse(json['lastLogin']) : null,
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      isVerified: json['isVerified'] ?? false,
+      postsCount: json['postsCount'] ?? 0,
+    );
+  }
 
-  Map<String, dynamic> toJson() => _$UserModelToJson(this);
+  /// From Map (for mock data compatibility)
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
+      id: map['id'],
+      walletAddress: map['wallet'] ?? map['walletAddress'] ?? '',
+      username: map['username'],
+      bio: map['bio'],
+      profileImage: map['avatar'] ?? map['profileImage'],
+      isVerified: map['verified'] ?? map['isVerified'] ?? false,
+      postsCount: map['posts'] ?? map['postsCount'] ?? 0,
+      followersCount: map['followersCount'] ?? 0,
+      followingCount: map['followingCount'] ?? 0,
+    );
+  }
+
+  /// To JSON
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id,
+      'walletAddress': walletAddress,
+      'username': username,
+      'bio': bio,
+      'profileImage': profileImage,
+      'nftProfilePicture': nftProfilePicture,
+      'solDomain': solDomain,
+      'totalEarned': totalEarned,
+      'followersCount': followersCount,
+      'followingCount': followingCount,
+      'following': following,
+      'charityPledgePercentage': charityPledgePercentage,
+      'selectedCause': selectedCause,
+      'isActive': isActive,
+      'lastLogin': lastLogin?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'isVerified': isVerified,
+      'postsCount': postsCount,
+    };
+  }
 
   /// Get display name (username or shortened wallet address)
   String get displayName {
@@ -83,6 +145,8 @@ class UserModel {
     DateTime? lastLogin,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isVerified,
+    int? postsCount,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -102,6 +166,8 @@ class UserModel {
       lastLogin: lastLogin ?? this.lastLogin,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isVerified: isVerified ?? this.isVerified,
+      postsCount: postsCount ?? this.postsCount,
     );
   }
 }

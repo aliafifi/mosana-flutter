@@ -298,8 +298,9 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
               Row(
                 children: [
                   UserAvatar(
-                    imageUrl: widget.post.author.avatarUrl,
-                    isVerified: widget.post.author.isVerified,
+                    imageUrl: widget.post.authorAvatar,
+                    username: widget.post.authorName,
+                    isVerified: widget.post.authorIsVerified,
                     size: 40,
                   ),
                   const SizedBox(width: 12),
@@ -308,7 +309,7 @@ class _MintNFTScreenState extends State<MintNFTScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.post.author.username,
+                          widget.post.authorName,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
