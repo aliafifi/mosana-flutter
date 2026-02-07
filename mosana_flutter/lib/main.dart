@@ -27,6 +27,16 @@ class MosanaApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: AppColors.pureBlack,
         primaryColor: AppColors.mosanaPurple,
+        brightness: Brightness.dark,
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(decoration: TextDecoration.none),
+          bodyMedium: TextStyle(decoration: TextDecoration.none),
+          bodySmall: TextStyle(decoration: TextDecoration.none),
+        ),
+        // Remove underlines from all text
+        textSelectionTheme: const TextSelectionThemeData(
+          selectionHandleColor: AppColors.mosanaPurple,
+        ),
       ),
       home: const SplashScreen(), // Start with Splash Screen
     );

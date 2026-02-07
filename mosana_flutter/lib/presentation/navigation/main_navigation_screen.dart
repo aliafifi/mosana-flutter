@@ -50,6 +50,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
+      extendBody: false, // Don't extend body behind bottom nav
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
