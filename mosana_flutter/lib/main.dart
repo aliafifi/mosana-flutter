@@ -24,10 +24,13 @@ class MosanaApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mosana',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
+      theme: ThemeData(
+        useMaterial3: false, // Use Material 2 for better control
+        brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.pureBlack,
         primaryColor: AppColors.mosanaPurple,
-        textTheme: ThemeData.dark().textTheme.apply(
+        // Completely remove all text decorations
+        textTheme: Typography.whiteMountainView.apply(
           bodyColor: AppColors.textPrimary,
           displayColor: AppColors.textPrimary,
           decorationColor: Colors.transparent,
@@ -35,12 +38,16 @@ class MosanaApp extends StatelessWidget {
           bodyLarge: const TextStyle(decoration: TextDecoration.none, color: AppColors.textPrimary),
           bodyMedium: const TextStyle(decoration: TextDecoration.none, color: AppColors.textPrimary),
           bodySmall: const TextStyle(decoration: TextDecoration.none, color: AppColors.textSecondary),
-          labelLarge: const TextStyle(decoration: TextDecoration.none),
-          labelMedium: const TextStyle(decoration: TextDecoration.none),
-          labelSmall: const TextStyle(decoration: TextDecoration.none),
+          titleLarge: const TextStyle(decoration: TextDecoration.none),
+          titleMedium: const TextStyle(decoration: TextDecoration.none),
+          titleSmall: const TextStyle(decoration: TextDecoration.none),
         ),
-        // Remove default Material underlines
-        dividerColor: Colors.transparent,
+        // Remove button text decorations
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            textStyle: const TextStyle(decoration: TextDecoration.none),
+          ),
+        ),
       ),
       home: const SplashScreen(),
     );

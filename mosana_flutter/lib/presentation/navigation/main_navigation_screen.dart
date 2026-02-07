@@ -50,10 +50,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
-      extendBody: false, // Don't extend body behind bottom nav
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _screens,
+      extendBody: false,
+      resizeToAvoidBottomInset: false, // Prevent keyboard from pushing up nav
+      body: SafeArea(
+        bottom: false, // Don't add safe area padding at bottom
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: _screens,
+        ),
       ),
       bottomNavigationBar: _buildBottomNav(),
       floatingActionButton: FloatingActionButton(
