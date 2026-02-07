@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../../core/config/colors.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../core/network/dio_client.dart';
 import '../../widgets/common/gradient_button.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../navigation/main_navigation_screen.dart';
@@ -13,6 +17,17 @@ class ConnectWalletScreen extends StatefulWidget {
 
 class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
   String? _connectingWallet;
+  bool _isConnecting = false;
+  late final AuthService _authService;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Initialize services
+    final storage = StorageService();
+    final dioClient = DioClient(storage);
+    _authService = AuthService(dioClient: dioClient, storage: storage);
+  }
 
   final List<WalletOption> _wallets = [
     const WalletOption(
@@ -33,22 +48,125 @@ class _ConnectWalletScreenState extends State<ConnectWalletScreen> {
       icon: Icons.phone_android,
       isRecommended: false,
     ),
+    const WalletOption(
+      name: '🧪 Demo Mode',
+      description: 'Test with mock wallet',
+      icon: Icons.science,
+      isRecommended: false,
+    ),
   ];
 
+  /// Generate a random test wallet address
+  String _generateTestWallet() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
+    final random = Random();
+    return List.generate(44, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+
+  /// Generate a mock signature
+  String _generateMockSignature() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz123456789';
+    final random = Random();
+    return List.generate(88, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+
   Future<void> _connectWallet(String walletName) async {
+    if (_isConnecting) return;
+    
     setState(() {
       _connectingWallet = walletName;
+      _isConnecting = true;
     });
 
-    // Simulate connection
-    await Future.delayed(const Duration(seconds: 2));
-    
-    if (!mounted) return;
-    
-    // Navigate to home
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => const MainNavigationScreen(),
+    try {
+      String walletAddress;
+      String signature;
+
+      if (walletName == '🧪 Demo Mode') {
+        // Demo mode: Generate test credentials
+        walletAddress = _generateTestWallet();
+        signature = _generateMockSignature();
+        
+        await Future.delayed(const Duration(milliseconds: 500));
+      } else {
+        // Real wallet connection (TODO: Implement real Solana wallet adapter)
+        _showComingSoonDialog(walletName);
+        setState(() {
+          _connectingWallet = null;
+          _isConnecting = false;
+        });
+        return;
+      }
+
+      // Authenticate with backend
+      final result = await _authService.connectWallet(
+        walletAddress: walletAddress,
+        signature: signature,
+      );
+
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        // Success! Navigate to main screen
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Connected as @${result.username}'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const MainNavigationScreen(),
+          ),
+        );
+      } else {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${result.error}'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Connection failed: $e'),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _connectingWallet = null;
+          _isConnecting = false;
+        });
+      }
+    }
+  }
+
+  void _showComingSoonDialog(String walletName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.deepPurpleBlack,
+        title: const Text(
+          'Coming Soon!',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: Text(
+          '$walletName integration is coming soon!\n\nFor now, use "🧪 Demo Mode" to test the app.',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
