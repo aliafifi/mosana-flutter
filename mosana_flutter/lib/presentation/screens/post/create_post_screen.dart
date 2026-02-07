@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../core/config/colors.dart';
 import '../../widgets/common/glass_card.dart';
 import '../../widgets/common/gradient_button.dart';
-import '../../../data/mock_data.dart';
+import '../../providers/feed_provider.dart';
 
 /// Screen for creating a new post
-class CreatePostScreen extends StatefulWidget {
+class CreatePostScreen extends ConsumerStatefulWidget {
   const CreatePostScreen({super.key});
 
   @override
-  State<CreatePostScreen> createState() => _CreatePostScreenState();
+  ConsumerState<CreatePostScreen> createState() => _CreatePostScreenState();
 }
 
-class _CreatePostScreenState extends State<CreatePostScreen> {
+class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   final TextEditingController _contentController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
   final List<XFile> _selectedImages = [];
@@ -126,35 +127,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     });
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 1));
+      // TODO: Upload images to server/cloud storage
+      // For now, we'll just pass empty imageUrls
+      List<String> imageUrls = [];
+      if (_selectedImages.isNotEmpty) {
+        // In production: upload images and get URLs
+        // imageUrls = await uploadImages(_selectedImages);
+        _showError('Image upload not yet implemented. Post will be created without images.');
+      }
 
-      // Create new post (in real app, this would call API)
-      final newPost = {
-        '_id': 'post_${DateTime.now().millisecondsSinceEpoch}',
-        'author': {
-          'username': 'you',
-          'profileImage': 'https://api.dicebear.com/7.x/avataaars/png?seed=you',
-          'verified': false,
-        },
-        'content': _contentController.text,
-        'imageUrl': _selectedImages.isNotEmpty 
-            ? _selectedImages.first.path // In real app, upload to server
-            : null,
-        'tags': _hashtags,
-        'likes': 0,
-        'comments': 0,
-        'tips': 0,
-        'shares': 0,
-        'liked': false,
-        'isMinted': false,
-        'createdAt': DateTime.now(),
-      };
+      // Create post via API
+      final result = await ref.read(postRepositoryProvider).createPost(
+        content: _contentController.text,
+        imageUrls: imageUrls.isNotEmpty ? imageUrls : null,
+        tags: _hashtags.isNotEmpty ? _hashtags : null,
+      );
 
-      // Add to mock data (at the beginning of the list)
-      MockData.posts.insert(0, newPost);
+      if (!mounted) return;
 
-      if (mounted) {
+      if (result.success) {
+        // Refresh feed to show new post
+        ref.read(feedProvider.notifier).refresh();
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -166,9 +160,13 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
 
         // Go back to feed
         Navigator.of(context).pop(true); // Return true to indicate success
+      } else {
+        _showError(result.error ?? 'Failed to create post');
       }
     } catch (e) {
-      _showError('Failed to create post: $e');
+      if (mounted) {
+        _showError('Failed to create post: $e');
+      }
     } finally {
       if (mounted) {
         setState(() {

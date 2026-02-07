@@ -1,42 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/colors.dart';
-import '../../../data/mock_data.dart';
-import '../../../data/models/user_model.dart';
-import '../../../data/models/post_model.dart';
-import '../../widgets/common/user_avatar.dart';
 import '../../widgets/post/post_card.dart';
+import '../../providers/feed_provider.dart';
 import '../notifications/notifications_screen.dart';
-import '../profile/profile_screen.dart';
-import '../wallet/send_tip_screen.dart';
-import '../wallet/mint_nft_screen.dart';
-import '../wallet/transaction_history_screen.dart';
-import '../wallet/wallet_settings_screen.dart';
-import '../explore/search_explore_screen.dart';
-import '../settings/settings_screen.dart';
-import '../analytics/analytics_dashboard_screen.dart';
-import '../interactions/advanced_interactions_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+/// Home screen with real-time feed from backend API
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isHeaderScrolled = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(() {
-      if (_scrollController.offset > 20 && !_isHeaderScrolled) {
-        setState(() => _isHeaderScrolled = true);
-      } else if (_scrollController.offset <= 20 && _isHeaderScrolled) {
-        setState(() => _isHeaderScrolled = false);
-      }
-    });
+    
+    // Header scroll listener
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.offset > 20 && !_isHeaderScrolled) {
+      setState(() => _isHeaderScrolled = true);
+    } else if (_scrollController.offset <= 20 && _isHeaderScrolled) {
+      setState(() => _isHeaderScrolled = false);
+    }
+
+    // Load more when near bottom
+    if (_scrollController.offset >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(feedProvider.notifier).loadMore();
+    }
   }
 
   @override
@@ -45,8 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _handleRefresh() async {
+    await ref.read(feedProvider.notifier).refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final feedState = ref.watch(feedProvider);
+
     return Material(
       color: AppColors.pureBlack,
       child: Stack(
@@ -69,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // Content
           SafeArea(
-            bottom: false, // Don't add padding at bottom (nav bar area)
+            bottom: false,
             child: Column(
               children: [
                 // Header
@@ -77,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Feed
                 Expanded(
-                  child: _buildFeed(),
+                  child: _buildFeed(feedState),
                 ),
               ],
             ),
@@ -141,85 +146,256 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
               ),
-              // Notification badge
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
+              // TODO: Add notification badge from API
             ],
-          ),
-
-          const SizedBox(width: 4),
-
-          // Profile avatar
-          UserAvatar.small(
-            imageUrl: MockData.users[0]['profileImage'] as String?,
-            username: 'You',
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
-                ),
-              );
-            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeed() {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
-      },
-      color: AppColors.mosanaPurple,
-      child: ListView.builder(
-        controller: _scrollController,
-        padding: const EdgeInsets.only(top: 8, bottom: 100), // Add bottom padding for nav bar + FAB
-        itemCount: MockData.posts.length,
-        itemBuilder: (context, index) {
-          final post = MockData.posts[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: PostCard(
-              post: post,
-              onLike: () {
-                // TODO: Like post
-                print('Like post ${post['_id']}');
-              },
-              onComment: () {
-                // TODO: Open comments
-                print('Comment on post ${post['_id']}');
-              },
-              onTip: () {
-                // TODO: Send tip
-                print('Tip post ${post['_id']}');
-              },
-              onShare: () {
-                // TODO: Share post
-                print('Share post ${post['_id']}');
-              },
-              onMint: () {
-                // TODO: Mint as NFT
-                print('Mint post ${post['_id']}');
-              },
-              onTap: () {
-                // TODO: Open post detail
-                print('Open post ${post['_id']}');
-              },
+  Widget _buildFeed(FeedState state) {
+    return state.when(
+      initial: () => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+        ),
+      ),
+      loading: (isRefresh) {
+        if (isRefresh) {
+          // Show refresh indicator
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
             ),
           );
-        },
+        }
+        // Initial loading
+        return const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+          ),
+        );
+      },
+      loaded: (posts, hasMore) {
+        if (posts.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          color: AppColors.mosanaPurple,
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(top: 8, bottom: 100),
+            itemCount: posts.length + (hasMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              // Loading indicator at bottom
+              if (index >= posts.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+                    ),
+                  ),
+                );
+              }
+
+              final post = posts[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: PostCard(
+                  post: post,
+                  onLike: () => _handleLike(post),
+                  onComment: () => _handleComment(post),
+                  onTip: () => _handleTip(post),
+                  onShare: () => _handleShare(post),
+                  onMint: () => _handleMint(post),
+                  onTap: () => _handlePostTap(post),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      loadingMore: (posts) {
+        return RefreshIndicator(
+          onRefresh: _handleRefresh,
+          color: AppColors.mosanaPurple,
+          child: ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(top: 8, bottom: 100),
+            itemCount: posts.length + 1,
+            itemBuilder: (context, index) {
+              if (index >= posts.length) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation(AppColors.mosanaPurple),
+                    ),
+                  ),
+                );
+              }
+
+              final post = posts[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: PostCard(
+                  post: post,
+                  onLike: () => _handleLike(post),
+                  onComment: () => _handleComment(post),
+                  onTip: () => _handleTip(post),
+                  onShare: () => _handleShare(post),
+                  onMint: () => _handleMint(post),
+                  onTap: () => _handlePostTap(post),
+                ),
+              );
+            },
+          ),
+        );
+      },
+      error: (message) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.red,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load feed',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => ref.read(feedProvider.notifier).refresh(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.mosanaPurple,
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.feed_outlined,
+            size: 64,
+            color: AppColors.textSecondary.withOpacity(0.5),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'No posts yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Be the first to post something!',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              // TODO: Navigate to create post
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Tap the + button to create a post'),
+                  backgroundColor: AppColors.mosanaPurple,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.mosanaPurple,
+            ),
+            child: const Text('Create Post'),
+          ),
+        ],
       ),
     );
+  }
+
+  // ===================== ACTION HANDLERS =====================
+
+  void _handleLike(Map<String, dynamic> post) {
+    final postId = post['_id'] as String;
+    ref.read(feedProvider.notifier).toggleLike(postId);
+  }
+
+  void _handleComment(Map<String, dynamic> post) {
+    // TODO: Open comments screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Comments feature coming soon!'),
+        backgroundColor: AppColors.mosanaPurple,
+      ),
+    );
+  }
+
+  void _handleTip(Map<String, dynamic> post) {
+    // TODO: Open tip screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tipping feature coming soon!'),
+        backgroundColor: AppColors.mosanaPurple,
+      ),
+    );
+  }
+
+  void _handleShare(Map<String, dynamic> post) {
+    // TODO: Share post
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Sharing feature coming soon!'),
+        backgroundColor: AppColors.mosanaPurple,
+      ),
+    );
+  }
+
+  void _handleMint(Map<String, dynamic> post) {
+    // TODO: Mint as NFT
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('NFT minting feature coming soon!'),
+        backgroundColor: AppColors.mosanaPurple,
+      ),
+    );
+  }
+
+  void _handlePostTap(Map<String, dynamic> post) {
+    // TODO: Navigate to post detail screen
+    print('Post tapped: ${post['_id']}');
   }
 }
